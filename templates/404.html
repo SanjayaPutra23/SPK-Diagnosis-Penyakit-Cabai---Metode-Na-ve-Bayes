@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block title %}Halaman Tidak Ditemukan - SPK Cabai{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8 text-center">
+        <div class="card shadow">
+            <div class="card-body py-5">
+                <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+                <h1 class="display-4 mt-4">404</h1>
+                <h2 class="mb-4">Halaman Tidak Ditemukan</h2>
+                <p class="lead mb-4">
+                    Halaman yang Anda cari tidak ditemukan atau telah dipindahkan.
+                </p>
+                <div class="d-grid gap-2 d-md-block">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-house"></i> Kembali ke Beranda
+                    </a>
+                    <a href="{{ url_for('dashboard') if current_user.is_authenticated else url_for('login') }}" 
+                       class="btn btn-success btn-lg">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
