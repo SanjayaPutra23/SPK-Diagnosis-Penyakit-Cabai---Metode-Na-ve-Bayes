@@ -1,0 +1,212 @@
+{% extends "layout.html" %}
+
+{% block title %}Data Penyakit - Admin SPK{% endblock %}
+
+{% block head %}
+<style>
+    .content-wrapper { padding: 20px; background-color: #f8f9fa; min-height: 100vh; }
+    .stats-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.04); border-left: 4px solid #198754; transition: transform 0.3s; height: 100%; }
+    .stats-card:hover { transform: translateY(-2px); }
+    .stats-card .number { font-size: 1.8rem; font-weight: 700; color: #198754; line-height: 1; }
+    .stats-card .label { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
+    .search-box { position: relative; max-width: 300px; width: 100%; }
+    .search-box input { border-radius: 50px; padding-left: 40px; border: 1px solid #e0e0e0; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: all 0.3s; }
+    .search-box input:focus { border-color: #198754; box-shadow: 0 4px 10px rgba(25, 135, 84, 0.1); }
+    .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa; }
+    .table-card { background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border: none; overflow: hidden; position: relative; }
+    .table-header-info { padding: 15px 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .table-header-info .info-text { font-size: 0.9rem; color: #495057; }
+    .table-scroll-area { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
+    .table-scroll-area::-webkit-scrollbar { width: 8px; height: 8px; }
+    .table-scroll-area::-webkit-scrollbar-track { background: #f1f1f1; }
+    .table-scroll-area::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+    .table { margin-bottom: 0; border-collapse: separate; border-spacing: 0; width: 100%; }
+    .table thead th { position: sticky; top: 0; background: linear-gradient(135deg, #198754 0%, #20c997 100%); color: white; z-index: 2; padding: 18px 15px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; font-size: 0.85rem; border: none; }
+    .table tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; color: #444; font-size: 0.95rem; }
+    .table tbody tr:hover { background-color: #f0fdf4; }
+    .action-buttons { display: flex; justify-content: center; gap: 5px; }
+    .action-btn { width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: none; transition: 0.2s; }
+    .btn-edit-row { background: #e3f2fd; color: #0d6efd; }
+    .btn-edit-row:hover { background: #0d6efd; color: white; transform: scale(1.1); }
+    .btn-info-row { background: #e0f7fa; color: #00bcd4; }
+    .btn-info-row:hover { background: #00bcd4; color: white; transform: scale(1.1); }
+    
+    .math-box { background-color: #212529; color: #20c997; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.9rem; margin-top: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h3 class="fw-bold text-dark mb-1"><i class="bi bi-activity text-success me-2"></i>Data Penyakit</h3>
+            <p class="text-muted mb-0 small">Manajemen data penyakit dan nilai prior probabilitas P(H).</p>
+            <div class="mt-2">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success">
+                    <i class="bi bi-book me-1"></i> Sumber Penyakit: Meilin (2014) | Prior: Santoso et al. (2025)
+                </span>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex justify-content-md-end gap-3 align-items-center mt-3 mt-md-0">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" class="form-control" placeholder="Cari Kode atau Nama...">
+            </div>
+            <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" disabled>
+                <i class="bi bi-lock-fill me-2"></i>Terkunci
+            </button>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-header-info">
+            <div class="info-text">Menampilkan <strong id="showingCount">{{ penyakit_list|length }}</strong> data penyakit</div>
+        </div>
+        
+        <div class="table-scroll-area">
+            <table class="table" id="penyakitTable">
+                <thead>
+                    <tr>
+                        <th class="ps-4" width="15%">KODE</th>
+                        <th width="35%">NAMA PENYAKIT</th>
+                        <th class="text-center" width="20%">PRIOR PROB. P(H)</th>
+                        <th class="text-center" width="15%">JML GEJALA</th>
+                        <th class="text-center" width="15%">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% if penyakit_list %}
+                        {% for penyakit in penyakit_list %}
+                        <tr class="penyakit-row">
+                            <td class="ps-4">
+                                <span class="fw-bold text-success font-monospace bg-success bg-opacity-10 px-2 py-1 rounded">{{ penyakit.kode_penyakit }}</span>
+                            </td>
+                            <td><span class="fw-semibold text-dark">{{ penyakit.nama_penyakit }}</span></td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary rounded-pill fs-6">{{ penyakit.prior_probability }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% set gejala_count = BobotProbabilitas.query.filter_by(penyakit_id=penyakit.id).count() %}
+                                <span class="badge bg-info rounded-pill text-dark">{{ gejala_count }} Aturan</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="action-buttons">
+                                    <button class="action-btn btn-info-row" data-bs-toggle="modal" data-bs-target="#infoModal{{ penyakit.id }}" title="Lihat Detail Penjelasan">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                    </button>
+                                    <button class="action-btn btn-edit-row" data-bs-toggle="modal" data-bs-target="#editPenyakitModal{{ penyakit.id }}" title="Edit Probabilitas">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="infoModal{{ penyakit.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-dark text-white">
+                                        <h5 class="modal-title fw-bold"><i class="bi bi-lightbulb me-2"></i>Detail Analisis: {{ penyakit.nama_penyakit }}</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body p-4 bg-light">
+                                        <div class="card border-0 shadow-sm mb-3">
+                                            <div class="card-body">
+                                                <h6 class="fw-bold text-success border-bottom pb-2">1. Apa itu Nilai Prior P(H)?</h6>
+                                                <p class="small text-muted mb-0">
+                                                    Nilai <strong>{{ penyakit.prior_probability }}</strong> (atau {{ (penyakit.prior_probability * 100)|round }}%) adalah nilai <em>Prior Probability</em>. Ini merepresentasikan probabilitas awal kemunculan penyakit ini di lahan pertanian secara umum, <strong>sebelum</strong> adanya bukti gejala apapun yang diamati.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="card border-0 shadow-sm mb-3">
+                                            <div class="card-body">
+                                                <h6 class="fw-bold text-success border-bottom pb-2">2. Dari mana angka ini berasal?</h6>
+                                                <p class="small text-muted mb-2">Nilai ini didapatkan dari proses perhitungan statistik berdasarkan basis data pakar:</p>
+                                                <div class="math-box">
+                                                    Rumus: P(H) = (Jumlah kemunculan Penyakit X) / (Total seluruh kejadian penyakit)<br><br>
+                                                    P({{ penyakit.kode_penyakit }}) = {{ penyakit.prior_probability }}
+                                                </div>
+                                                <div class="alert alert-info py-2 px-3 mt-3 mb-0 small">
+                                                    <i class="bi bi-info-circle-fill me-2"></i><strong>Syarat Naïve Bayes:</strong> Total seluruh nilai P(H) untuk semua penyakit dalam sistem ini jika dijumlahkan harus bernilai tepat <strong>1.0000</strong> (100%).
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="card border-0 shadow-sm">
+                                            <div class="card-body">
+                                                <h6 class="fw-bold text-success border-bottom pb-2">3. Sumber Knowledge Base</h6>
+                                                <ul class="small text-muted mb-0 ps-3">
+                                                    <li class="mb-1"><strong>Kamus & Sifat Penyakit:</strong> Diambil dari pedoman teknis <em>Meilin (2014)</em>.</li>
+                                                    <li><strong>Angka Probabilitas:</strong> Diadaptasi dari dataset penelitian <em>Santoso et al. (2025)</em>.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" id="editPenyakitModal{{ penyakit.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Edit Penyakit</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form action="{{ url_for('admin_edit_penyakit', id=penyakit.id) }}" method="POST">
+                                        <div class="modal-body p-4">
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label small fw-bold">Kode</label>
+                                                    <input type="text" name="kode" class="form-control bg-light" value="{{ penyakit.kode_penyakit }}" readonly>
+                                                </div>
+                                                <div class="col-md-8 mb-3">
+                                                    <label class="form-label small fw-bold">Nama Penyakit</label>
+                                                    <input type="text" name="nama" class="form-control bg-light" value="{{ penyakit.nama_penyakit }}" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Prior Probability (Desimal 0-1)</label>
+                                                <input type="number" step="0.0001" min="0" max="1" name="prior_probability" class="form-control border-primary" value="{{ penyakit.prior_probability }}" required>
+                                                <small class="text-muted">Gunakan titik (.) untuk desimal. Contoh: 0.2000</small>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer bg-light">
+                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-sm btn-primary px-4">Simpan Perubahan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('.penyakit-row');
+    const count = document.getElementById('showingCount');
+    
+    if(searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            let visible = 0;
+            const term = this.value.toLowerCase();
+            rows.forEach(row => {
+                if(row.innerText.toLowerCase().includes(term)) { row.style.display = ''; visible++; } 
+                else { row.style.display = 'none'; }
+            });
+            if(count) count.textContent = visible;
+        });
+    }
+});
+</script>
+{% endblock %}
