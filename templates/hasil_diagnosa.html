@@ -1,0 +1,230 @@
+{% extends "layout.html" %}
+
+{% block title %}Hasil Diagnosis - SPK Cabai{% endblock %}
+
+{% block head %}
+<style>
+    .probability-circle {
+        width: 120px; height: 120px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem; font-weight: bold; color: white;
+        margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        border: 4px solid white; background-color: #198754;
+    }
+    .recommendation-list { list-style: none; padding: 0; margin: 0; counter-reset: step-counter; }
+    .recommendation-step { counter-increment: step-counter; padding-left: 50px; position: relative; margin-bottom: 15px; line-height: 1.6; }
+    .recommendation-step:before {
+        content: counter(step-counter); position: absolute; left: 0; top: -2px;
+        background: #198754; color: white; width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; font-weight: bold;
+    }
+    
+    /* Tombol Aksi Detail Hitungan */
+    .btn-calc-detail {
+        background-color: #e0f7fa; color: #00bcd4; border: none;
+        width: 32px; height: 32px; border-radius: 8px; display: inline-flex;
+        align-items: center; justify-content: center; transition: 0.2s;
+    }
+    .btn-calc-detail:hover { background-color: #00bcd4; color: white; transform: scale(1.1); }
+    
+    /* Kotak Rumus Math */
+    .math-box {
+        background-color: #212529; color: #20c997; padding: 15px;
+        border-radius: 8px; font-family: monospace; font-size: 0.95rem; margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set top_result = none %}
+{% if hasil is iterable and hasil|length > 0 %}
+    {% set top_result = hasil[0] %}
+{% endif %}
+
+<div class="result-header text-center mb-4 mt-3">
+    <h2 class="mb-1 fw-bold text-success">
+        <i class="bi bi-clipboard-check"></i> Hasil Diagnosis
+    </h2>
+    <p class="mb-0 text-muted">
+        <i class="bi bi-calendar-event me-1"></i> Tanggal: {{ diagnosa.tanggal_diagnosa.strftime('%d %B %Y, %H:%M') }} WIB
+    </p>
+    <div class="mt-2">
+        <span class="badge bg-light text-dark border"><i class="bi bi-book"></i> Sumber Pengetahuan: Meilin (2014) & Santoso (2025)</span>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-8 mb-4 mb-lg-0">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-success text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-activity me-2"></i>Diagnosis Utama</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    {% if top_result %}
+                        <div class="col-md-4 text-center mb-4 mb-md-0">
+                            <div class="probability-circle">
+                                {{ top_result.probabilitas }}%
+                            </div>
+                            <div class="mt-3 fw-bold text-success">Probabilitas Posterior</div>
+                        </div>
+                        <div class="col-md-8">
+                            <h2 class="fw-bold text-dark mb-1">{{ top_result.nama_penyakit }}</h2>
+                            <span class="badge bg-secondary mb-3">Kode: {{ top_result.kode_penyakit }}</span>
+                            <div class="alert alert-light border-success border-start border-4" role="alert">
+                                <strong>Fase Pertumbuhan:</strong> {{ diagnosa.fase_input|title }}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-list-check me-2"></i>Gejala Dipilih</h5>
+            </div>
+            <div class="card-body bg-light" style="max-height: 250px; overflow-y: auto;">
+                <ul class="list-group list-group-flush rounded">
+                    {% for gejala in gejala_names %}
+                    <li class="list-group-item d-flex align-items-start bg-transparent px-0">
+                        <i class="bi bi-check2-circle text-success me-2 mt-1"></i>
+                        <span class="small">{{ gejala }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-journal-medical me-2"></i>Rekomendasi Penanganan Taktis</h5>
+            </div>
+            <div class="card-body p-4">
+                {% if top_result and top_result.solusi %}
+                    <p class="text-muted small mb-3"><i class="bi bi-info-circle"></i> Bersumber dari Pedoman Meilin (2014):</p>
+                    <div class="recommendation-content">
+                        <ul class="recommendation-list">
+                            <li class="recommendation-step">{{ top_result.solusi }}</li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Tidak ada rekomendasi penanganan.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-secondary text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-calculator me-2"></i>Langkah Perhitungan Naïve Bayes</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Penyakit</th>
+                                <th>Prior P(H)</th>
+                                <th>Likelihood P(E|H)</th>
+                                <th>Numerator</th>
+                                <th>Posterior Probability</th>
+                                <th class="text-center pe-4">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_normalisasi = namespace(value=0) %}
+                            {% for result in hasil %}
+                                {% set total_normalisasi.value = total_normalisasi.value + result.posterior %}
+                            {% endfor %}
+
+                            {% for result in hasil %}
+                            <tr {% if loop.first %}class="table-success"{% endif %}>
+                                <td class="ps-4 fw-bold">{{ result.nama_penyakit }}</td>
+                                <td>{{ "%.4f"|format(result.prior) }}</td>
+                                <td>{{ "%.6f"|format(result.likelihood) }}</td>
+                                <td class="font-monospace">{{ "%.6f"|format(result.posterior) }}</td>
+                                <td>
+                                    <span class="fw-bold">{{ result.probabilitas }}%</span>
+                                </td>
+                                <td class="text-center pe-4">
+                                    <button class="btn-calc-detail" data-bs-toggle="modal" data-bs-target="#calcModal{{ loop.index }}" title="Lihat Rincian Rumus">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <div class="modal fade" id="calcModal{{ loop.index }}" tabindex="-1">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-dark text-white">
+                                            <h5 class="modal-title fw-bold">
+                                                <i class="bi bi-calculator-fill me-2"></i>Detail Rumus: {{ result.nama_penyakit }}
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4 bg-light">
+                                            
+                                            <h6 class="fw-bold text-primary mb-2">1. Menghitung Numerator (Pembilang)</h6>
+                                            <p class="small text-muted mb-2">Numerator didapat dari perkalian nilai Prior Probability P(H) dengan Total Likelihood P(E|H) dari semua gejala yang dipilih (Sifat Independensi Naïve Bayes).</p>
+                                            <div class="math-box mb-4">
+                                                Rumus: Numerator = P(H) × P(E|H)<br><br>
+                                                Numerator = {{ "%.4f"|format(result.prior) }} × {{ "%.6f"|format(result.likelihood) }}<br>
+                                                Numerator = <span class="text-white">{{ "%.6f"|format(result.posterior) }}</span>
+                                            </div>
+
+                                            <h6 class="fw-bold text-success mb-2">2. Menghitung Posterior Probability (Normalisasi)</h6>
+                                            <p class="small text-muted mb-2">Untuk mendapatkan nilai persentase akhir, Numerator penyakit ini dibagi dengan Total Normalisasi (Jumlah keseluruhan Numerator dari semua kemungkinan penyakit).</p>
+                                            <div class="math-box">
+                                                Rumus: P(H|E) = Numerator / Total Normalisasi (Σ)<br><br>
+                                                P(H|E) = {{ "%.6f"|format(result.posterior) }} ÷ {{ "%.6f"|format(total_normalisasi.value) }}<br>
+                                                P(H|E) = {{ "%.4f"|format(result.posterior / total_normalisasi.value) }}<br><br>
+                                                Hasil Akhir = <span class="text-white">{{ result.probabilitas }}%</span>
+                                            </div>
+
+                                            <div class="alert alert-info mt-4 mb-0 small">
+                                                <i class="bi bi-info-circle-fill me-2"></i>Nilai Prior dan Likelihood ini merujuk pada basis data probabilitas Santoso (2025) yang dioptimasi dengan variabel fase tanaman.
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-dark">
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold">Total Normalisasi (Σ Numerator):</td>
+                                <td colspan="3" class="font-monospace fw-bold ps-3">{{ "%.6f"|format(total_normalisasi.value) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12 text-center">
+        {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('admin_semua_diagnosa') }}" class="btn btn-secondary rounded-pill px-4"><i class="bi bi-arrow-left me-2"></i>Kembali</a>
+        {% else %}
+            <a href="{{ url_for('riwayat') }}" class="btn btn-secondary rounded-pill px-4"><i class="bi bi-arrow-left me-2"></i>Riwayat</a>
+            <a href="{{ url_for('diagnosa') }}" class="btn btn-success rounded-pill px-4 mx-2"><i class="bi bi-arrow-repeat me-2"></i>Diagnosis Baru</a>
+        {% endif %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark rounded-pill px-4"><i class="bi bi-house-door me-2"></i>Dashboard</a>
+    </div>
+</div>
+{% endblock %}
