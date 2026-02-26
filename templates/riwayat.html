@@ -1,0 +1,309 @@
+{% extends "layout.html" %}
+
+{% block title %}Riwayat Diagnosis - SPK Cabai{% endblock %}
+
+{% block head %}
+<style>
+    /* --- SUMMARY CARDS --- */
+    .summary-card {
+        border: none;
+        border-radius: 15px;
+        background: white;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s;
+        height: 100%;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .summary-icon {
+        width: 50px; height: 50px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 15px;
+    }
+
+    /* --- SEARCH BAR --- */
+    .search-input {
+        border-radius: 50px;
+        padding-left: 40px;
+        border: 1px solid #e9ecef;
+        background-color: #f8f9fa;
+        height: 45px;
+    }
+    .search-input:focus {
+        background-color: #fff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        border-color: #198754;
+    }
+    .search-icon-pos {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+    }
+
+    /* --- TABLE STYLING (COLORFUL) --- */
+    .history-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: linear-gradient(45deg, #198754, #20c997);
+        color: white;
+        border: none;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 18px 15px;
+        vertical-align: middle;
+    }
+
+    .table tbody tr:nth-of-type(odd) { background-color: #f4fbf6; }
+    .table tbody tr:nth-of-type(even) { background-color: #ffffff; }
+
+    .table tbody td {
+        padding: 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #e0e0e0;
+        color: #333;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #e8f5e9;
+        transition: background-color 0.2s;
+    }
+    
+    .disease-icon {
+        width: 40px; height: 40px;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        margin-right: 15px;
+        color: #198754;
+        font-size: 1.2rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1"><i class="bi bi-clock-history text-success me-2"></i>Riwayat Diagnosis</h3>
+            <p class="text-muted mb-0">Rekap jejak kesehatan tanaman cabai Anda.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('diagnosa') }}" class="btn btn-success rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i> Diagnosis Baru
+            </a>
+        </div>
+    </div>
+
+    {% if diagnosa_list %}
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="summary-card">
+                <div class="summary-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-files"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold mb-0">{{ diagnosa_list|length }}</h2>
+                    <small class="text-muted">Total Riwayat</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="summary-card">
+                <div class="summary-icon bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold mb-0">
+                        {{ (diagnosa_list|map(attribute='prob_persen')|sum / diagnosa_list|length if diagnosa_list|length > 0 else 0)|round(1) }}%
+                    </h2>
+                    <small class="text-muted">Rata-rata Probabilitas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="summary-card">
+                <div class="summary-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold mb-0">
+                        {{ diagnosa_list|map(attribute='prob_persen')|max|round(1) if diagnosa_list|length > 0 else 0 }}%
+                    </h2>
+                    <small class="text-muted">Probabilitas Tertinggi</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card history-card">
+        <div class="card-header bg-white py-3 px-4 border-0 d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <h5 class="fw-bold mb-3 mb-md-0 text-success">Daftar Hasil Diagnosis</h5>
+            
+            <div class="position-relative" style="width: 100%; max-width: 300px;">
+                <i class="bi bi-search search-icon-pos"></i>
+                <input type="text" id="searchInput" class="form-control search-input" placeholder="Cari penyakit atau tanggal...">
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            {% if diagnosa_list %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="historyTable">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Tanggal & Waktu</th>
+                            <th>Penyakit Terdeteksi</th>
+                            <th>Fase Pertumbuhan</th>
+                            <th class="text-center">Probabilitas</th>
+                            <th class="text-center">Gejala</th>
+                            <th class="text-center pe-4">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for diagnosa in diagnosa_list %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark">{{ diagnosa.tanggal_diagnosa.strftime('%d %b %Y') }}</div>
+                                <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ diagnosa.tanggal_diagnosa.strftime('%H:%M') }} WIB</small>
+                            </td>
+                            
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="disease-icon">
+                                        <i class="bi bi-bug-fill"></i>
+                                    </div>
+                                    <div>
+                                        {% if diagnosa.penyakit_rel %}
+                                            <div class="fw-bold text-dark">{{ diagnosa.penyakit_rel.nama_penyakit }}</div>
+                                            <span class="badge bg-white text-secondary border border-secondary-subtle rounded-1" style="font-size: 0.65rem;">
+                                                {{ diagnosa.penyakit_rel.kode_penyakit }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted fst-italic">Tidak teridentifikasi</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2">
+                                    {{ diagnosa.fase_input|title }}
+                                </span>
+                            </td>
+                            
+                            <td class="text-center">
+                                <span class="badge bg-success px-3 py-2" style="font-size: 0.9rem;">
+                                    {{ diagnosa.prob_persen|round(1) }}%
+                                </span>
+                            </td>
+                            
+                            <td class="text-center">
+                                {% if diagnosa.gejala_input %}
+                                    {% set gejala_ids = diagnosa.gejala_input|fromjson %}
+                                    <span class="badge bg-white text-dark border border-secondary-subtle px-3 py-2">{{ gejala_ids|length }} Indikator</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td class="text-center pe-4">
+                                <a href="{{ url_for('hasil_diagnosa', diagnosa_id=diagnosa.id) }}" 
+                                   class="btn btn-outline-success btn-sm rounded-pill px-3 bg-white"
+                                   data-bs-toggle="tooltip" title="Lihat Rekomendasi">
+                                    Lihat Detail <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="noResult" class="text-center py-5 d-none">
+                <i class="bi bi-search display-6 text-muted opacity-25"></i>
+                <p class="text-muted mt-2">Data tidak ditemukan untuk pencarian tersebut.</p>
+            </div>
+
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-3">
+                    <i class="bi bi-clipboard-x display-1 text-muted opacity-25"></i>
+                </div>
+                <h5 class="text-muted">Belum Ada Riwayat</h5>
+                <p class="text-muted mb-4 small">Mulai diagnosis pertama Anda untuk memantau kesehatan tanaman.</p>
+                <a href="{{ url_for('diagnosa') }}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-heart-pulse me-2"></i>Mulai Diagnosis
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- SCRIPT PENCARIAN TABEL (Client Side) ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const table = document.getElementById('historyTable');
+        const noResult = document.getElementById('noResult');
+
+        if(searchInput && table) {
+            searchInput.addEventListener('keyup', function() {
+                const filter = searchInput.value.toLowerCase();
+                const rows = table.getElementsByTagName('tr');
+                let hasData = false;
+
+                // Loop baris (skip header row index 0)
+                for (let i = 1; i < rows.length; i++) {
+                    let rowText = rows[i].textContent.toLowerCase();
+                    if (rowText.includes(filter)) {
+                        rows[i].style.display = "";
+                        hasData = true;
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+
+                // Show/Hide No Result Message
+                if (!hasData) {
+                    noResult.classList.remove('d-none');
+                    table.classList.add('d-none'); 
+                } else {
+                    noResult.classList.add('d-none');
+                    table.classList.remove('d-none');
+                }
+            });
+        }
+        
+        // Aktifkan Tooltip Bootstrap
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>
+{% endblock %}
