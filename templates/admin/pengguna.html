@@ -1,0 +1,609 @@
+{% extends "layout.html" %}
+
+{% block title %}Data Pengguna - Admin SPK{% endblock %}
+
+{% block head %}
+<style>
+    /* --- STYLE COPY DARI PENYAKIT.HTML (AGAR SERAGAM) --- */
+    .content-wrapper { padding: 20px; background-color: #f8f9fa; min-height: 100vh; }
+
+    /* STATS CARD */
+    .stats-card {
+        background: white; border-radius: 12px; padding: 15px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.04); border-left: 4px solid #198754;
+        transition: transform 0.3s; height: 100%;
+    }
+    .stats-card:hover { transform: translateY(-2px); }
+    .stats-card .number { font-size: 1.8rem; font-weight: 700; color: #198754; line-height: 1; }
+    .stats-card .label { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
+
+    /* SEARCH BAR & FILTER */
+    .search-box { position: relative; max-width: 300px; width: 100%; }
+    .search-box input {
+        border-radius: 50px; padding-left: 40px; border: 1px solid #e0e0e0;
+        background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: all 0.3s;
+    }
+    .search-box input:focus { border-color: #198754; box-shadow: 0 4px 10px rgba(25, 135, 84, 0.1); }
+    .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa; }
+    
+    /* FILTER BUTTONS DI TABLE HEADER */
+    .table-header-info {
+        padding: 15px 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between;
+        align-items: center; flex-wrap: wrap; gap: 15px;
+    }
+    .table-header-info .info-text { font-size: 0.9rem; color: #495057; }
+    .table-header-info .info-text strong { color: #198754; }
+    
+    .table-header-info .filter-section {
+        display: flex; align-items: center; gap: 10px;
+    }
+    
+    .filter-buttons { display: flex; gap: 5px; }
+    .filter-btn {
+        padding: 6px 12px; border-radius: 50px; border: 1px solid #dee2e6;
+        background: white; color: #666; font-size: 0.8rem; font-weight: 500;
+        transition: all 0.2s; cursor: pointer; white-space: nowrap;
+    }
+    .filter-btn:hover { 
+        background-color: #f8f9fa; 
+        border-color: #198754; 
+        color: #198754; 
+    }
+    .filter-btn.active {
+        background-color: #198754; 
+        color: white; 
+        border-color: #198754;
+        box-shadow: 0 2px 5px rgba(25, 135, 84, 0.2);
+    }
+    
+    .filter-label {
+        font-size: 0.8rem; color: #666; font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* CARD & TABLE */
+    .table-card {
+        background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        border: none; overflow: hidden; position: relative;
+    }
+
+    /* SCROLLING TABLE */
+    .table-scroll-area { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
+    .table-scroll-area::-webkit-scrollbar { width: 8px; height: 8px; }
+    .table-scroll-area::-webkit-scrollbar-track { background: #f1f1f1; }
+    .table-scroll-area::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+    .table-scroll-area::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+    /* TABLE STYLING */
+    .table { margin-bottom: 0; border-collapse: separate; border-spacing: 0; width: 100%; }
+    .table thead th {
+        position: sticky; top: 0; 
+        background: linear-gradient(135deg, #198754 0%, #20c997 100%); /* HIJAU (Sama seperti Penyakit) */
+        color: white; z-index: 2; padding: 18px 15px; font-weight: 600; letter-spacing: 0.5px;
+        text-transform: uppercase; font-size: 0.85rem; border: none;
+    }
+    .table tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; color: #444; font-size: 0.95rem; }
+    .table tbody tr:nth-child(even) { background-color: #fcfcfc; }
+    .table tbody tr:hover { background-color: #f0fdf4; }
+
+    /* ACTION BUTTONS - DISUSUN SEJAJAR */
+    .action-buttons {
+        display: flex; justify-content: center; gap: 5px;
+    }
+    
+    .action-btn {
+        width: 32px; height: 32px; border-radius: 8px; display: inline-flex;
+        align-items: center; justify-content: center; border: none; transition: 0.2s;
+    }
+    
+    /* Warna tombol sama seperti penyakit.html */
+    .btn-detail-row { background: #e0f2f1; color: #009688; }
+    .btn-detail-row:hover { background: #009688; color: white; transform: scale(1.1); }
+    
+    .btn-edit-row { background: #e3f2fd; color: #0d6efd; }
+    .btn-edit-row:hover { background: #0d6efd; color: white; transform: scale(1.1); }
+    
+    .btn-delete-row { background: #fce8e6; color: #dc3545; }
+    .btn-delete-row:hover { background: #dc3545; color: white; transform: scale(1.1); }
+
+    /* Badge Custom */
+    .badge-admin { background-color: #dc3545 !important; }
+    .badge-petani { background-color: #198754 !important; }
+    
+    /* Modal Detail Custom */
+    .user-avatar {
+        width: 80px; height: 80px; border-radius: 50%; display: flex; 
+        align-items: center; justify-content: center; margin: 0 auto 15px;
+        font-size: 2.5rem; color: white;
+    }
+    .avatar-admin { background: linear-gradient(135deg, #dc3545 0%, #e35d6a 100%); }
+    .avatar-petani { background: linear-gradient(135deg, #198754 0%, #20c997 100%); }
+    
+    .detail-item {
+        padding: 8px 0; border-bottom: 1px solid #f0f0f0;
+        display: flex; justify-content: space-between;
+    }
+    
+    .detail-label {
+        font-weight: 600; color: #666; min-width: 150px;
+    }
+    
+    .detail-value {
+        color: #333; text-align: right;
+    }
+    
+    /* Password toggle */
+    .password-toggle {
+        position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+        background: none; border: none; color: #666; cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h3 class="fw-bold text-dark mb-1">
+                <i class="bi bi-people text-success me-2"></i>Data Pengguna
+            </h3>
+            <p class="text-muted mb-0 small">Manajemen data pengguna sistem (Admin & Petani).</p>
+        </div>
+        <div class="col-md-6 d-flex justify-content-md-end gap-3 align-items-center mt-3 mt-md-0">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" class="form-control" placeholder="Cari Username, Nama, atau Email...">
+            </div>
+            <a href="{{ url_for('tambah_pengguna') }}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
+                <i class="bi bi-plus-lg me-2"></i>Tambah
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="number" id="totalUsers">{{ user_list|length }}</div>
+                <div class="label">Total Pengguna</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="number" id="totalAdmin">{{ user_list|selectattr('role', 'equalto', 'admin')|list|length }}</div>
+                <div class="label">Admin</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="number" id="totalPetani">{{ user_list|selectattr('role', 'equalto', 'petani')|list|length }}</div>
+                <div class="label">Petani</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="number">{{ user_list|selectattr('email', 'none')|list|length }}</div>
+                <div class="label">Tanpa Email</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <!-- HEADER TABEL DENGAN FILTER DI SEBELAH KANAN -->
+        <div class="table-header-info">
+            <div class="info-text">
+                Menampilkan <strong id="showingCount">{{ user_list|length }}</strong> data pengguna
+            </div>
+            
+            <div class="filter-section">
+                <span class="filter-label">Filter Role:</span>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">Semua</button>
+                    <button class="filter-btn" data-filter="admin">Admin</button>
+                    <button class="filter-btn" data-filter="petani">Petani</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-scroll-area">
+            <table class="table" id="userTable">
+                <thead>
+                    <tr>
+                        <th class="ps-4" width="5%">ID</th>
+                        <th width="15%">USERNAME</th>
+                        <th width="20%">NAMA LENGKAP</th>
+                        <th width="20%">EMAIL</th>
+                        <th width="15%">LOKASI</th>
+                        <th class="text-center" width="10%">ROLE</th>
+                        <th class="text-center" width="10%">TERDAFTAR</th>
+                        <th class="text-center" width="15%">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% if user_list %}
+                        {% for user in user_list %}
+                        <tr class="user-row" data-role="{{ user.role }}">
+                            <td class="ps-4">
+                                <span class="fw-bold text-success font-monospace bg-success bg-opacity-10 px-2 py-1 rounded">
+                                    #{{ user.id }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">{{ user.username }}</span>
+                            </td>
+                            <td>
+                                <span>{{ user.nama_lengkap or '-' }}</span>
+                            </td>
+                            <td>
+                                {% if user.email %}
+                                    <span class="text-dark">{{ user.email }}</span>
+                                {% else %}
+                                    <span class="text-muted fst-italic">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span>{{ user.lokasi or '-' }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge rounded-pill {{ 'badge-admin' if user.role == 'admin' else 'badge-petani' }}">
+                                    {{ 'Admin' if user.role == 'admin' else 'Petani' }}
+                                </span>
+                            </td>
+                            <td class="text-center small text-muted">
+                                {{ user.created_at.strftime('%d/%m/%Y') }}
+                            </td>
+                            <td class="text-center">
+                                <div class="action-buttons">
+                                    <button class="action-btn btn-detail-row" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#detailUserModal{{ user.id }}"
+                                            title="Detail">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </button>
+                                    
+                                    <button class="action-btn btn-edit-row" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editUserModal{{ user.id }}"
+                                            title="Edit">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                    
+                                    <button class="action-btn btn-delete-row" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteUserModal{{ user.id }}"
+                                            title="Hapus">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Modal Detail Pengguna - UNIFORM UNTUK SEMUA ROLE -->
+                        <div class="modal fade" id="detailUserModal{{ user.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-info text-white">
+                                        <h5 class="modal-title fw-bold"><i class="bi bi-eye"></i> Detail Pengguna</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body p-4">
+                                        <!-- Basic Info -->
+                                        <div class="row mb-4">
+                                            <div class="col-md-3 text-center mb-3">
+                                                <div class="user-avatar {{ 'avatar-admin' if user.role == 'admin' else 'avatar-petani' }}">
+                                                    {{ user.username[0]|upper }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-9">
+                                                <h4 class="fw-bold text-dark mb-1">{{ user.nama_lengkap or user.username }}</h4>
+                                                <p class="fst-italic text-muted mb-2">Username: {{ user.username }}</p>
+                                                <span class="badge rounded-pill {{ 'badge-admin' if user.role == 'admin' else 'badge-petani' }}">
+                                                    {{ 'Admin' if user.role == 'admin' else 'Petani' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- User Information -->
+                                        <div class="mb-4">
+                                            <h6 class="fw-bold text-success mb-3">
+                                                <i class="bi bi-info-circle me-2"></i>Informasi Pengguna
+                                            </h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">ID Pengguna:</span>
+                                                        <span class="detail-value fw-bold">#{{ user.id }}</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">Username:</span>
+                                                        <span class="detail-value">{{ user.username }}</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">Nama Lengkap:</span>
+                                                        <span class="detail-value">{{ user.nama_lengkap or '-' }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">Email:</span>
+                                                        <span class="detail-value">{{ user.email or '-' }}</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">Lokasi:</span>
+                                                        <span class="detail-value">{{ user.lokasi or '-' }}</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">Role:</span>
+                                                        <span class="detail-value">{{ user.role|title }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Sistem Information -->
+                                        <div class="mb-4">
+                                            <h6 class="fw-bold text-success mb-3">
+                                                <i class="bi bi-clock-history me-2"></i>Informasi Sistem
+                                            </h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">Tanggal Daftar:</span>
+                                                        <span class="detail-value">{{ user.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">Status Akun:</span>
+                                                        <span class="detail-value">
+                                                            {% if user.is_active %}
+                                                                <span class="badge bg-success">Aktif</span>
+                                                            {% else %}
+                                                                <span class="badge bg-danger">Non-Aktif</span>
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- TIDAK ADA BAGIAN STATISTIK DAN TIDAK ADA TERAKHIR LOGIN -->
+                                        
+                                    </div>
+                                    <div class="modal-footer bg-light">
+                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Edit Pengguna -->
+                        <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Edit Data Pengguna</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form action="{{ url_for('edit_pengguna', id=user.id) }}" method="POST">
+                                        <div class="modal-body p-4">
+                                            <div class="row mb-4">
+                                                <div class="col-md-3 text-center mb-3">
+                                                    <div class="p-3 bg-light border rounded h-100 d-flex flex-column justify-content-center">
+                                                        <h2 class="display-4 fw-bold text-primary mb-0">#{{ user.id }}</h2>
+                                                        <small class="text-muted">ID Pengguna</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <h4 class="fw-bold text-dark mb-1">{{ user.username }}</h4>
+                                                    <p class="text-muted mb-3">Edit informasi pengguna di bawah ini</p>
+                                                    <span class="badge {{ 'bg-danger' if user.role == 'admin' else 'bg-success' }}">
+                                                        {{ 'Admin' if user.role == 'admin' else 'Petani' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label small fw-bold">Username</label>
+                                                    <input type="text" name="username" class="form-control" value="{{ user.username }}" required>
+                                                    <div class="form-text text-muted small">Username untuk login sistem</div>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label small fw-bold">Email</label>
+                                                    <input type="email" name="email" class="form-control" value="{{ user.email or '' }}">
+                                                    <div class="form-text text-muted small">Email aktif pengguna</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label small fw-bold">Nama Lengkap</label>
+                                                    <input type="text" name="nama_lengkap" class="form-control" value="{{ user.nama_lengkap or '' }}">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label small fw-bold">Lokasi</label>
+                                                    <input type="text" name="lokasi" class="form-control" value="{{ user.lokasi or '' }}">
+                                                    <div class="form-text text-muted small">Lokasi tempat tinggal/kerja</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label small fw-bold">Role</label>
+                                                    <select name="role" class="form-select" required>
+                                                        <option value="petani" {{ 'selected' if user.role == 'petani' else '' }}>Petani</option>
+                                                        <option value="admin" {{ 'selected' if user.role == 'admin' else '' }}>Admin</option>
+                                                    </select>
+                                                    <div class="form-text text-muted small">Hak akses pengguna dalam sistem</div>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label small fw-bold">Password Baru</label>
+                                                    <div class="position-relative">
+                                                        <input type="password" name="password" id="password{{ user.id }}" class="form-control" placeholder="Kosongkan jika tidak diubah">
+                                                        <button type="button" class="password-toggle" onclick="togglePassword('password{{ user.id }}', this)">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="form-text text-muted small">Biarkan kosong untuk menjaga password lama</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Status Akun</label>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive{{ user.id }}" value="1" {{ 'checked' if user.is_active else '' }}>
+                                                    <label class="form-check-label" for="isActive{{ user.id }}">
+                                                        Akun aktif (dapat login ke sistem)
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer bg-light">
+                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-sm btn-primary px-4">Simpan Perubahan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Konfirmasi Hapus -->
+                        <div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered modal-sm">
+                                <div class="modal-content text-center border-0 shadow">
+                                    <div class="modal-body p-4">
+                                        <div class="mb-3 text-danger bg-danger bg-opacity-10 p-3 rounded-circle d-inline-block">
+                                            <i class="bi bi-trash3-fill display-4"></i>
+                                        </div>
+                                        <h5 class="fw-bold mb-2">Hapus Pengguna?</h5>
+                                        <p class="text-muted small">
+                                            Pengguna <strong>{{ user.username }}</strong> akan dihapus permanen.
+                                            {% if user.role == 'petani' %}
+                                            <br><span class="text-danger fw-semibold">Riwayat diagnosa juga akan terhapus!</span>
+                                            {% endif %}
+                                        </p>
+                                        <div class="d-flex justify-content-center gap-2 mt-4">
+                                            <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">Batal</button>
+                                            <a href="{{ url_for('hapus_pengguna', id=user.id) }}" 
+                                               class="btn btn-danger btn-sm px-4"
+                                               onclick="return confirm('Yakin hapus pengguna {{ user.username }}? Tindakan ini tidak dapat dibatalkan.')">
+                                                Ya, Hapus
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" width="80" class="opacity-25 mb-3">
+                                <p class="text-muted">Belum ada data pengguna tersedia.</p>
+                                <a href="{{ url_for('tambah_pengguna') }}" class="btn btn-success mt-2">
+                                    <i class="bi bi-plus-lg me-1"></i>Tambah Pengguna Pertama
+                                </a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const userRows = document.querySelectorAll('.user-row');
+    const showingCount = document.getElementById('showingCount');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    let currentFilter = 'all';
+    let currentSearch = '';
+    
+    // Fungsi untuk filter data
+    function filterData() {
+        let visibleCount = 0;
+        
+        userRows.forEach(row => {
+            const username = row.cells[1].innerText.toLowerCase();
+            const nama = row.cells[2].innerText.toLowerCase();
+            const email = row.cells[3].innerText.toLowerCase();
+            const lokasi = row.cells[4].innerText.toLowerCase();
+            const role = row.getAttribute('data-role');
+            
+            // Cek apakah sesuai dengan filter role
+            const roleMatch = currentFilter === 'all' || role === currentFilter;
+            
+            // Cek apakah sesuai dengan search
+            const searchMatch = currentSearch === '' || 
+                username.includes(currentSearch) || 
+                nama.includes(currentSearch) || 
+                email.includes(currentSearch) || 
+                lokasi.includes(currentSearch);
+            
+            // Tampilkan jika keduanya sesuai
+            if (roleMatch && searchMatch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        if(showingCount) showingCount.textContent = visibleCount;
+    }
+    
+    // Event listener untuk search
+    if(searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            currentSearch = this.value.toLowerCase();
+            filterData();
+        });
+    }
+    
+    // Event listener untuk filter buttons
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Hapus class active dari semua button
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Tambah class active ke button yang diklik
+            this.classList.add('active');
+            
+            // Update filter aktif
+            currentFilter = this.getAttribute('data-filter');
+            
+            // Terapkan filter
+            filterData();
+        });
+    });
+    
+    // Fungsi toggle password visibility
+    window.togglePassword = function(passwordId, button) {
+        const passwordInput = document.getElementById(passwordId);
+        const icon = button.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    };
+    
+    // Inisialisasi tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
+
+{% endblock %}

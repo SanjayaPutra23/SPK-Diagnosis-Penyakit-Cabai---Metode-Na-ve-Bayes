@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block title %}Tambah Pengguna{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow" style="max-width: 600px; margin: 0 auto;">
+        <div class="card-header bg-primary text-white fw-bold">Tambah Pengguna Baru</div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-3">
+                    <label>Username</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label>Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label>Nama Lengkap</label>
+                    <input type="text" name="nama_lengkap" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label>Role</label>
+                    <select name="role" class="form-select">
+                        <option value="petani">Petani</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label>Lokasi</label>
+                    <input type="text" name="lokasi" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Simpan</button>
+                <a href="{{ url_for('admin_pengguna') }}" class="btn btn-light w-100 mt-2">Batal</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
