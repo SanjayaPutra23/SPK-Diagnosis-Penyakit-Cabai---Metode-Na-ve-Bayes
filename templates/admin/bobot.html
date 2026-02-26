@@ -1,0 +1,196 @@
+{% extends "layout.html" %}
+
+{% block title %}Data Bobot (Likelihood) - Admin SPK{% endblock %}
+
+{% block head %}
+<style>
+    .content-wrapper { padding: 20px; background-color: #f8f9fa; min-height: 100vh; }
+    .stats-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.04); border-left: 4px solid #198754; transition: transform 0.3s; height: 100%; }
+    .search-box { position: relative; max-width: 300px; width: 100%; }
+    .search-box input { border-radius: 50px; padding-left: 40px; border: 1px solid #e0e0e0; }
+    .search-box input:focus { border-color: #198754; box-shadow: 0 4px 10px rgba(25, 135, 84, 0.1); }
+    .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa; }
+    .table-card { background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border: none; overflow: hidden; position: relative; }
+    .table-header-info { padding: 15px 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .table-scroll-area { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
+    .table { margin-bottom: 0; width: 100%; }
+    .table thead th { position: sticky; top: 0; background: linear-gradient(135deg, #198754 0%, #20c997 100%); color: white; z-index: 2; padding: 15px; font-weight: 600; font-size: 0.85rem; }
+    .table tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; }
+    .table tbody tr:hover { background-color: #f0fdf4; }
+    .filter-buttons { display: flex; gap: 5px; }
+    .filter-btn { padding: 6px 12px; border-radius: 50px; border: 1px solid #dee2e6; background: white; font-size: 0.8rem; font-weight: 500; transition: all 0.2s; cursor: pointer; }
+    .filter-btn.active { background-color: #198754; color: white; border-color: #198754; }
+    .btn-detail-row { background: #e0f7fa; color: #00bcd4; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: none; transition: 0.2s; }
+    .btn-detail-row:hover { background: #00bcd4; color: white; transform: scale(1.1); }
+    
+    .math-box { background-color: #212529; color: #20c997; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.9rem; margin-top: 10px; }
+    .highlight-text { color: #d63384; font-weight: bold; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h3 class="fw-bold text-dark mb-1"><i class="bi bi-percent text-success me-2"></i>Data Bobot (Likelihood)</h3>
+            <p class="text-muted mb-0 small">Nilai probabilitas kemunculan gejala pada suatu penyakit berdasarkan fase pertumbuhan.</p>
+            <div class="mt-2">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success">
+                    <i class="bi bi-book me-1"></i> Sumber Nilai Likelihood: Santoso et al. (2025)
+                </span>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex justify-content-md-end gap-3 align-items-center mt-3 mt-md-0">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" class="form-control" placeholder="Cari Penyakit atau Gejala...">
+            </div>
+            <button type="button" class="btn btn-secondary rounded-pill px-4 fw-bold shadow-sm" disabled>
+                <i class="bi bi-lock-fill me-2"></i>Terkunci
+            </button>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-header-info">
+            <div class="info-text">Menampilkan <strong id="showingCount">{{ bobot_list|length }}</strong> data bobot probabilitas</div>
+            <div class="d-flex align-items-center gap-2">
+                <span style="font-size: 0.8rem; font-weight: bold; color: #666;">Filter Fase:</span>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">Semua</button>
+                    <button class="filter-btn" data-filter="vegetatif">Vegetatif</button>
+                    <button class="filter-btn" data-filter="generatif">Generatif</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-scroll-area">
+            <table class="table" id="bobotTable">
+                <thead>
+                    <tr>
+                        <th class="text-center" width="10%">FASE</th>
+                        <th width="30%">PENYAKIT P(H)</th>
+                        <th width="35%">GEJALA P(E)</th>
+                        <th class="text-center" width="15%">LIKELIHOOD P(E|H)</th>
+                        <th class="text-center" width="10%">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% if bobot_list %}
+                        {% for bobot in bobot_list %}
+                        <tr class="bobot-row" data-fase="{{ bobot.fase_pertumbuhan }}">
+                            <td class="text-center">
+                                <span class="badge rounded-pill bg-{{ 'info text-dark' if bobot.fase_pertumbuhan == 'vegetatif' else 'warning text-dark' }}">
+                                    {{ bobot.fase_pertumbuhan|upper }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success">{{ bobot.penyakit_rel.nama_penyakit }}</span>
+                                <div class="small text-muted">{{ bobot.penyakit_rel.kode_penyakit }}</div>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">{{ bobot.gejala_rel.nama_gejala }}</span>
+                                <div class="small text-muted">{{ bobot.gejala_rel.kode_gejala }}</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 fs-6">
+                                    {{ bobot.nilai_probabilitas }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn-detail-row" data-bs-toggle="modal" data-bs-target="#detailBobotModal{{ bobot.id }}" title="Lihat Detail Penjelasan">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="detailBobotModal{{ bobot.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-dark text-white">
+                                        <h5 class="modal-title fw-bold"><i class="bi bi-gear-fill me-2"></i>Analisis Likelihood P(E|H)</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body p-4 bg-light">
+                                        
+                                        <div class="alert alert-success border-success border-start border-4 mb-4">
+                                            Bagaimana jika <strong>{{ bobot.penyakit_rel.nama_penyakit }}</strong> menyerang tanaman di fase <strong>{{ bobot.fase_pertumbuhan|upper }}</strong>? Seberapa besar kemungkinan muncul gejala <strong>"{{ bobot.gejala_rel.nama_gejala }}"</strong>? <br><br>
+                                            Jawabannya adalah <strong>{{ (bobot.nilai_probabilitas * 100)|round }}%</strong> (atau {{ bobot.nilai_probabilitas }}).
+                                        </div>
+
+                                        <div class="card border-0 shadow-sm mb-3">
+                                            <div class="card-body">
+                                                <h6 class="fw-bold text-success border-bottom pb-2">1. Dari mana hasil {{ bobot.nilai_probabilitas }} didapatkan?</h6>
+                                                <p class="small text-muted mb-2">Nilai ini adalah <em>Conditional Probability</em>. Secara matematis, perhitungannya didapat dari data rekam jejak observasi (Knowledge Base):</p>
+                                                <div class="math-box">
+                                                    Rumus: P(Gejala | Penyakit, Fase) = (Jml tanaman bergejala X yang terjangkit Penyakit Y di Fase Z) / (Total semua tanaman terjangkit Penyakit Y di Fase Z)<br><br>
+                                                    P({{ bobot.gejala_rel.kode_gejala }} | {{ bobot.penyakit_rel.kode_penyakit }}, {{ bobot.fase_pertumbuhan|title }}) = {{ bobot.nilai_probabilitas }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="card border-0 shadow-sm">
+                                            <div class="card-body">
+                                                <h6 class="fw-bold text-success border-bottom pb-2">2. Sumber Data & Novelty (Kebaruan)</h6>
+                                                <ul class="small text-muted mb-0 ps-3">
+                                                    <li class="mb-2"><strong>Nilai Probabilitas ({{ bobot.nilai_probabilitas }}):</strong> Bersumber dan diadaptasi dari dataset probabilitas penelitian <span class="highlight-text">Santoso et al. (2025)</span>.</li>
+                                                    <li class="mb-2"><strong>Identifikasi Gejala ({{ bobot.gejala_rel.kode_gejala }}):</strong> Mengacu pada literatur pedoman pertanian <span class="highlight-text">Meilin (2014)</span>.</li>
+                                                    <li><strong>Integrasi Fase ({{ bobot.fase_pertumbuhan|title }}):</strong> Ini adalah <em>novelty</em> (kebaruan) sistem. Konsep memisahkan probabilitas berdasarkan umur tanaman diadaptasi dari gagasan <span class="highlight-text">Lestari (2025)</span> untuk mengurangi ambiguitas (kemiripan gejala).</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('.bobot-row');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const count = document.getElementById('showingCount');
+    
+    let currentFilter = 'all';
+    let currentSearch = '';
+
+    function filterData() {
+        let visibleCount = 0;
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const fase = row.getAttribute('data-fase');
+            const matchesSearch = text.includes(currentSearch);
+            const matchesFilter = currentFilter === 'all' || fase === currentFilter;
+            
+            if (matchesSearch && matchesFilter) { row.style.display = ''; visibleCount++; } 
+            else { row.style.display = 'none'; }
+        });
+        if (count) count.textContent = visibleCount;
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() { currentSearch = this.value.toLowerCase(); filterData(); });
+    }
+
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.getAttribute('data-filter');
+            filterData();
+        });
+    });
+});
+</script>
+{% endblock %}
