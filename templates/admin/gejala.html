@@ -1,0 +1,253 @@
+{% extends "layout.html" %}
+
+{% block title %}Kelola Gejala - Admin SPK{% endblock %}
+
+{% block head %}
+<style>
+    /* --- KITA PAKAI CSS BAJU HIJAU YANG SAMA --- */
+    .content-wrapper { padding: 20px; background-color: #f8f9fa; min-height: 100vh; }
+    .stats-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.04); border-left: 4px solid #198754; transition: transform 0.3s; height: 100%; }
+    .stats-card:hover { transform: translateY(-2px); }
+    .stats-card .number { font-size: 1.8rem; font-weight: 700; color: #198754; line-height: 1; }
+    .stats-card .label { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
+    .search-box { position: relative; max-width: 300px; width: 100%; }
+    .search-box input { border-radius: 50px; padding-left: 40px; border: 1px solid #e0e0e0; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: all 0.3s; }
+    .search-box input:focus { border-color: #198754; box-shadow: 0 4px 10px rgba(25, 135, 84, 0.1); }
+    .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa; }
+    .table-card { background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border: none; overflow: hidden; position: relative; }
+    .table-header-info { padding: 15px 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .table-header-info .info-text { font-size: 0.9rem; color: #495057; }
+    .table-header-info .info-text strong { color: #198754; }
+    .table-scroll-area { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
+    .table-scroll-area::-webkit-scrollbar { width: 8px; height: 8px; }
+    .table-scroll-area::-webkit-scrollbar-track { background: #f1f1f1; }
+    .table-scroll-area::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+    .table-scroll-area::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    .table { margin-bottom: 0; border-collapse: separate; border-spacing: 0; width: 100%; }
+    .table thead th { position: sticky; top: 0; background: linear-gradient(135deg, #198754 0%, #20c997 100%); color: white; z-index: 2; padding: 18px 15px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; font-size: 0.85rem; border: none; }
+    .table tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; color: #444; font-size: 0.95rem; }
+    .table tbody tr:nth-child(even) { background-color: #fcfcfc; }
+    .table tbody tr:hover { background-color: #f0fdf4; }
+    .action-btn { width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: none; transition: 0.2s; margin: 0 2px; }
+    .btn-edit-row { background: #e3f2fd; color: #0d6efd; }
+    .btn-edit-row:hover { background: #0d6efd; color: white; transform: scale(1.1); }
+    .btn-delete-row { background: #fce8e6; color: #dc3545; }
+    .btn-delete-row:hover { background: #dc3545; color: white; transform: scale(1.1); }
+    
+    .badge-soft { padding: 6px 12px; border-radius: 30px; font-weight: 600; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; }
+    .badge-soft.daun { background: #d1e7dd; color: #0f5132; }
+    .badge-soft.batang { background: #fff3cd; color: #664d03; }
+    .badge-soft.buah { background: #f8d7da; color: #842029; }
+    .badge-soft.akar { background: #e2e3e5; color: #383d41; }
+
+    /* --- TAMBAHAN CSS UNTUK TOMBOL FILTER --- */
+    .filter-buttons { display: flex; gap: 5px; flex-wrap: wrap; }
+    .filter-btn { padding: 5px 15px; border-radius: 50px; border: 1px solid #dee2e6; background: white; color: #666; font-size: 0.8rem; font-weight: 500; transition: all 0.2s; cursor: pointer; }
+    .filter-btn:hover { background-color: #f8f9fa; border-color: #198754; color: #198754; }
+    .filter-btn.active { background-color: #198754; color: white; border-color: #198754; box-shadow: 0 2px 5px rgba(25, 135, 84, 0.2); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h3 class="fw-bold text-dark mb-1"><i class="bi bi-clipboard-check text-success me-2"></i>Data Gejala</h3>
+            <p class="text-muted mb-0 small">Kamus gejala penyakit sesuai organ tanaman.</p>
+            <div class="mt-2">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success">
+                    <i class="bi bi-book me-1"></i> Sumber Kriteria Fisik: Meilin (2014) & Lestari (2025)
+                </span>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex justify-content-md-end gap-3 align-items-center mt-3 mt-md-0">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" class="form-control" placeholder="Cari kode atau nama...">
+            </div>
+            <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" disabled title="Terkunci: Data Sesuai Pakar">
+                <i class="bi bi-lock-fill me-2"></i>Terkunci
+            </button>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="stats-card">
+                <div class="number" id="totalData">{{ gejala_list|length }}</div>
+                <div class="label">Total Gejala</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="stats-card" style="border-color: #d1e7dd;">
+                <div class="number">{{ gejala_list|selectattr('kategori_organ', 'equalto', 'daun')|list|length }}</div>
+                <div class="label">Gejala Daun</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-12 mb-3">
+             <div class="alert alert-warning mb-0 h-100 d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                <small><strong>Peringatan!</strong> Penambahan/Penghapusan dinonaktifkan sementara untuk menjaga integritas dengan tabel Bobot di database baru.</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-header-info">
+            <div class="info-text">
+                Menampilkan <strong id="showingCount">{{ gejala_list|length }}</strong> data gejala
+            </div>
+            
+            <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                <span style="font-size: 0.8rem; font-weight: bold; color: #666;">Filter Organ:</span>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">Semua</button>
+                    <button class="filter-btn" data-filter="daun">Daun</button>
+                    <button class="filter-btn" data-filter="batang">Batang</button>
+                    <button class="filter-btn" data-filter="buah">Buah</button>
+                    <button class="filter-btn" data-filter="akar">Akar</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-scroll-area">
+            <table class="table" id="gejalaTable">
+                <thead>
+                    <tr>
+                        <th class="ps-4" width="10%">KODE</th>
+                        <th width="50%">NAMA GEJALA</th>
+                        <th width="20%" class="text-center">ORGAN TANAMAN</th>
+                        <th width="20%" class="text-center">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% if gejala_list %}
+                        {% for gejala in gejala_list %}
+                        <tr class="gejala-row" data-kategori="{{ gejala.kategori_organ|lower }}">
+                            <td class="ps-4">
+                                <span class="fw-bold text-success font-monospace bg-success bg-opacity-10 px-2 py-1 rounded">
+                                    {{ gejala.kode_gejala }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">{{ gejala.nama_gejala }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-soft {{ gejala.kategori_organ|lower }}">
+                                    {% if gejala.kategori_organ == 'daun' %} <i class="bi bi-leaf-fill"></i>
+                                    {% elif gejala.kategori_organ == 'batang' %} <i class="bi bi-tree-fill"></i>
+                                    {% elif gejala.kategori_organ == 'buah' %} <i class="bi bi-apple"></i>
+                                    {% elif gejala.kategori_organ == 'akar' %} <i class="bi bi-flower1"></i>
+                                    {% endif %}
+                                    {{ gejala.kategori_organ|title }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button class="action-btn btn-edit-row" data-bs-toggle="modal" data-bs-target="#editModal{{ gejala.id }}" title="Edit Teks Gejala">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="editModal{{ gejala.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title fw-bold">Edit Gejala</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form action="{{ url_for('admin_edit_gejala', id=gejala.id) }}" method="POST">
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Kode</label>
+                                                <input type="text" name="kode" class="form-control bg-light" value="{{ gejala.kode_gejala }}" readonly>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Nama Gejala</label>
+                                                <textarea name="nama" class="form-control" rows="3" required>{{ gejala.nama_gejala }}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Kategori Organ</label>
+                                                <input type="text" name="kategori" class="form-control bg-light" value="{{ gejala.kategori_organ }}" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer bg-light">
+                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-sm btn-primary px-4">Simpan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">Belum ada data gejala.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('.gejala-row');
+    const count = document.getElementById('showingCount');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    
+    let currentSearch = '';
+    let currentFilter = 'all';
+    
+    // Fungsi gabungan Search dan Filter
+    function filterData() {
+        let visible = 0;
+        
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const kategori = row.getAttribute('data-kategori');
+            
+            const matchSearch = text.includes(currentSearch);
+            const matchFilter = (currentFilter === 'all' || kategori === currentFilter);
+            
+            // Tampilkan baris HANYA JIKA sesuai pencarian text DAN filter kategori
+            if(matchSearch && matchFilter) {
+                row.style.display = '';
+                visible++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update angka "Menampilkan X data gejala"
+        if(count) count.textContent = visible;
+    }
+
+    // Listener untuk text pencarian
+    if(searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            currentSearch = this.value.toLowerCase();
+            filterData();
+        });
+    }
+    
+    // Listener untuk tombol filter kategori
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Hapus status 'active' dari semua tombol, lalu pasang di tombol yang diklik
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Ambil nilai kategori dari atribut data-filter
+            currentFilter = this.getAttribute('data-filter');
+            
+            // Eksekusi filter
+            filterData();
+        });
+    });
+});
+</script>
+{% endblock %}
