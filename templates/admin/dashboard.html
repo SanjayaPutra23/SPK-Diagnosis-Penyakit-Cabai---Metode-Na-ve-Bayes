@@ -1,0 +1,389 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin Dashboard - SPK Cabai{% endblock %}
+
+{% block head %}
+<style>
+    /* --- DASHBOARD HEADER --- */
+    .dashboard-header {
+        background: linear-gradient(135deg, #0f5132 0%, #198754 100%);
+        border-radius: 20px;
+        padding: 40px 30px;
+        color: white;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(15, 81, 50, 0.2);
+    }
+    
+    /* Dekorasi lingkaran di background header */
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    .dashboard-header::after {
+        content: '';
+        position: absolute;
+        bottom: -30px;
+        right: 80px;
+        width: 100px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    /* --- STATISTIC CARDS --- */
+    .stat-card {
+        border: none;
+        border-radius: 15px;
+        background: white;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        height: 100%;
+    }
+    
+    /* Warna Border Atas */
+    .border-top-primary { border-top: 4px solid #0d6efd; }
+    .border-top-danger { border-top: 4px solid #dc3545; }
+    .border-top-warning { border-top: 4px solid #ffc107; }
+    .border-top-info { border-top: 4px solid #0dcaf0; }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    }
+
+    .icon-box {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+
+    /* --- QUICK MENU (GRID STYLE) --- */
+    .quick-menu-item {
+        background: white;
+        border: 1px solid #eee;
+        border-radius: 15px;
+        padding: 15px 10px;
+        text-align: center;
+        transition: all 0.2s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none !important;
+        color: #495057;
+    }
+    
+    .quick-menu-item:hover {
+        background: #f8f9fa;
+        border-color: #198754;
+        transform: translateY(-3px);
+        color: #198754;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    
+    .quick-menu-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        transition: transform 0.3s;
+    }
+    
+    .quick-menu-item:hover .quick-menu-icon {
+        transform: scale(1.1);
+    }
+
+    /* --- TABLE STYLE --- */
+    .avatar-circle {
+        width: 35px;
+        height: 35px;
+        background-color: #e9ecef;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #495057;
+        margin-right: 10px;
+    }
+
+    /* --- KEYAKINAN BADGE STYLES --- */
+    .badge-keyakinan-tinggi { background: linear-gradient(135deg, #198754 0%, #20c997 100%); color: white; }
+    .badge-keyakinan-sedang { background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%); color: #212529; }
+    .badge-keyakinan-rendah { background: linear-gradient(135deg, #6c757d 0%, #8d99a7 100%); color: white; }
+
+    /* --- INFO CARD STYLES --- */
+    .info-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <div class="dashboard-header d-flex flex-column flex-md-row justify-content-between align-items-center">
+        <div class="z-1 text-center text-md-start">
+            <h2 class="fw-bold mb-1">Dashboard Admin</h2>
+            <p class="mb-0 opacity-75">Halo, Administrator! Pantau kesehatan tanaman dan aktivitas sistem hari ini.</p>
+        </div>
+        
+        <div class="text-center text-md-end mt-3 mt-md-0 z-1 p-3 rounded-3 border border-white border-opacity-25" 
+             style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(5px); min-width: 200px;">
+            <h2 class="mb-0 fw-bold text-white">{{ total_diagnosa }}</h2>
+            <small class="text-white opacity-75">Total Diagnosa Selesai</small>
+        </div>
+    </div>
+    
+    <div class="row g-4 mb-5">
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card border-top-primary p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted small text-uppercase fw-bold mb-1">Total Petani</p>
+                        <h2 class="fw-bold mb-0 text-dark">{{ total_petani }}</h2>
+                    </div>
+                    <div class="icon-box bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2">
+                        <i class="bi bi-arrow-up-short"></i> Aktif
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card border-top-danger p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted small text-uppercase fw-bold mb-1">Data Penyakit</p>
+                        <h2 class="fw-bold mb-0 text-dark">{{ total_penyakit }}</h2>
+                    </div>
+                    <div class="icon-box bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('admin_penyakit') }}" class="small text-danger text-decoration-none fw-bold">Lihat Detail <i class="bi bi-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card border-top-warning p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted small text-uppercase fw-bold mb-1">Data Gejala</p>
+                        <h2 class="fw-bold mb-0 text-dark">{{ total_gejala }}</h2>
+                    </div>
+                    <div class="icon-box bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('admin_gejala') }}" class="small text-warning text-decoration-none fw-bold">Kelola Indikator <i class="bi bi-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card border-top-info p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted small text-uppercase fw-bold mb-1">Riwayat Diagnosa</p>
+                        <h2 class="fw-bold mb-0 text-dark">{{ total_diagnosa }}</h2>
+                    </div>
+                    <div class="icon-box bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-clipboard-data"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('admin_semua_diagnosa') }}" class="small text-info text-decoration-none fw-bold">Lihat Detail <i class="bi bi-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold m-0 text-dark">Aktivitas Diagnosis Terbaru</h6>
+                        <small class="text-muted">Pantau hasil diagnosis petani secara real-time</small>
+                    </div>
+                    <a href="{{ url_for('admin_semua_diagnosa') }}" class="btn btn-light btn-sm rounded-pill text-primary fw-bold px-3">
+                        Semua Data
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if diagnosa_terbaru %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 py-3 text-secondary small text-uppercase" style="background:none; color:#6c757d;">Petani</th>
+                                    <th class="py-3 text-secondary small text-uppercase" style="background:none; color:#6c757d;">Hasil Diagnosa</th>
+                                    <th class="py-3 text-secondary small text-uppercase text-center" style="background:none; color:#6c757d;">Probabilitas</th>
+                                    <th class="py-3 text-secondary small text-uppercase text-center" style="background:none; color:#6c757d;">Tanggal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for diagnosa in diagnosa_terbaru %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-success bg-opacity-10 text-success">
+                                                {{ diagnosa.pengguna.username[0]|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark">{{ diagnosa.pengguna.username }}</div>
+                                                <small class="text-muted" style="font-size: 0.75rem;">Petani</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if diagnosa.penyakit_rel %}
+                                            <span class="text-success fw-bold">{{ diagnosa.penyakit_rel.nama_penyakit }}</span>
+                                            <small class="d-block text-muted">{{ diagnosa.penyakit_rel.kode_penyakit }}</small>
+                                        {% else %}
+                                            <span class="text-muted fst-italic">Tidak teridentifikasi</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex flex-column align-items-center">
+                                            <span class="fw-bold small {% if diagnosa.prob_persen >= 80 %}text-success{% elif diagnosa.prob_persen >= 60 %}text-warning{% else %}text-secondary{% endif %}">
+                                                {{ diagnosa.prob_persen|round(1) }}%
+                                            </span>
+                                            <div class="progress mt-1" style="height: 4px; width: 60px;">
+                                                <div class="progress-bar 
+                                                    {% if diagnosa.prob_persen >= 80 %}bg-success
+                                                    {% elif diagnosa.prob_persen >= 60 %}bg-warning
+                                                    {% else %}bg-secondary{% endif %}" 
+                                                    style="width: {{ diagnosa.prob_persen }}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center text-muted small">
+                                        {{ diagnosa.tanggal_diagnosa.strftime('%d/%m/%Y') }}<br>
+                                        {{ diagnosa.tanggal_diagnosa.strftime('%H:%M') }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <img src="https://cdn-icons-png.flaticon.com/512/4076/4076432.png" alt="Empty" style="width: 60px; opacity: 0.3;">
+                        <p class="text-muted mt-2 small">Belum ada aktivitas diagnosis.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <h6 class="fw-bold text-secondary mb-3 px-1">Menu Cepat (Master Data)</h6>
+            <div class="row g-2">
+                <div class="col-4">
+                    <a href="{{ url_for('admin_penyakit') }}" class="quick-menu-item p-2">
+                        <div class="quick-menu-icon bg-success bg-opacity-10 text-success mb-2" style="width:40px; height:40px; font-size:1.2rem;">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <span class="fw-bold" style="font-size: 0.75rem;">Penyakit</span>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a href="{{ url_for('admin_gejala') }}" class="quick-menu-item p-2">
+                        <div class="quick-menu-icon bg-warning bg-opacity-10 text-warning mb-2" style="width:40px; height:40px; font-size:1.2rem;">
+                            <i class="bi bi-clipboard-check"></i>
+                        </div>
+                        <span class="fw-bold" style="font-size: 0.75rem;">Gejala</span>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a href="{{ url_for('admin_bobot') }}" class="quick-menu-item p-2">
+                        <div class="quick-menu-icon bg-danger bg-opacity-10 text-danger mb-2" style="width:40px; height:40px; font-size:1.2rem;">
+                            <i class="bi bi-percent"></i>
+                        </div>
+                        <span class="fw-bold" style="font-size: 0.75rem;">Bobot</span>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a href="{{ url_for('admin_rekomendasi') }}" class="quick-menu-item p-2">
+                        <div class="quick-menu-icon bg-secondary bg-opacity-10 text-secondary mb-2" style="width:40px; height:40px; font-size:1.2rem;">
+                            <i class="bi bi-journal-medical"></i>
+                        </div>
+                        <span class="fw-bold" style="font-size: 0.75rem;">Solusi</span>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a href="{{ url_for('admin_pengguna') }}" class="quick-menu-item p-2">
+                        <div class="quick-menu-icon bg-primary bg-opacity-10 text-primary mb-2" style="width:40px; height:40px; font-size:1.2rem;">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <span class="fw-bold" style="font-size: 0.75rem;">Pengguna</span>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a href="{{ url_for('admin_semua_diagnosa') }}" class="quick-menu-item p-2">
+                        <div class="quick-menu-icon bg-info bg-opacity-10 text-info mb-2" style="width:40px; height:40px; font-size:1.2rem;">
+                            <i class="bi bi-archive"></i>
+                        </div>
+                        <span class="fw-bold" style="font-size: 0.75rem;">Riwayat</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-4 rounded-4 bg-light">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-hdd-rack-fill text-secondary me-2"></i>
+                        <small class="fw-bold text-uppercase text-muted" style="font-size: 0.7rem;">Status Server</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="fw-bold text-dark">Database MySQL</small>
+                        <span class="badge bg-success rounded-pill" style="font-size: 0.6rem;">ONLINE</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="fw-bold text-dark">Engine Naïve Bayes</small>
+                        <span class="badge bg-success rounded-pill" style="font-size: 0.6rem;">READY</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
