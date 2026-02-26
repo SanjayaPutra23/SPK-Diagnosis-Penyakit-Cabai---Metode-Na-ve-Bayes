@@ -1,0 +1,325 @@
+{% extends "layout.html" %}
+
+{% block title %}Beranda - SPK Diagnosis Penyakit Cabai{% endblock %}
+
+{% block head %}
+<style>
+    /* --- Style Khusus Halaman Utama --- */
+    
+    /* 1. Hero Section Gradient & Layout */
+    .hero-section {
+        background: linear-gradient(135deg, #198754 0%, #20c997 100%); /* Gradasi Hijau Segar */
+        color: white;
+        position: relative;
+        overflow: hidden; /* Mencegah elemen keluar batas */
+        padding: 60px 20px;
+        border-radius: 40px;
+        margin: 20px; 
+        box-shadow: 0 10px 30px rgba(25, 135, 84, 0.2); /* Bayangan halus biar keren */
+    }
+    
+    /* 2. Animasi Mengambang (Floating) untuk Gambar */
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    .floating-anim {
+        animation: float 4s ease-in-out infinite;
+    }
+
+    /* 3. Animasi Masuk (Slide Up) */
+    .entrance-anim {
+        animation: slideInUp 1s ease-out;
+    }
+    @keyframes slideInUp {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* 4. Fitur Icon Styles */
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(40, 167, 69, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        transition: all 0.3s ease;
+    }
+    
+    /* Efek Hover pada Kartu Fitur */
+    .card:hover .feature-icon {
+        background: #198754;
+        color: white !important;
+        transform: scale(1.1);
+    }
+    
+    .card:hover .feature-icon i {
+        color: white !important;
+    }
+
+    /* 5. Tech Stack Item Styles */
+    .tech-item {
+        border: 1px solid #dee2e6;
+        border-radius: 15px;
+        transition: transform 0.3s, box-shadow 0.3s;
+        background: white;
+        height: 100%; /* Agar tinggi seragam */
+    }
+
+    .tech-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        border-color: #198754;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="position-absolute top-0 end-0 bg-white opacity-10 rounded-circle" 
+         style="width: 500px; height: 500px; margin-top: -100px; margin-right: -100px; opacity: 0.1;"></div>
+    
+    <div class="container position-relative z-1">
+        <div class="row align-items-center">
+            
+            <div class="col-lg-6 text-center text-lg-start mb-5 mb-lg-0 entrance-anim">
+                <div class="d-inline-block bg-warning text-dark fw-bold px-3 py-1 rounded-pill mb-3 shadow-sm">
+                    <i class="bi bi-star-fill"></i> Metode Naïve Bayes
+                </div>
+                <h1 class="display-4 fw-bold mb-3">
+                    Jaga Kualitas <br>Panen Cabai Anda
+                </h1>
+                <p class="lead mb-4 opacity-75">
+                    Sistem pakar cerdas untuk mendiagnosis penyakit tanaman cabai secara akurat, cepat, dan terpercaya berbasis web.
+                </p>
+                
+                {% if not current_user.is_authenticated %}
+                <div class="d-flex gap-3 justify-content-center justify-content-lg-start">
+                    <a href="{{ url_for('login') }}" class="btn btn-light btn-lg px-4 shadow text-success fw-bold">
+                        <i class="bi bi-search"></i> Mulai Diagnosis
+                    </a>
+                    <a href="#tentang" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-book"></i> Pelajari Dulu
+                    </a>
+                </div>
+                <div class="mt-4 small opacity-75">
+                    <i class="bi bi-check-circle-fill"></i> Gratis digunakan untuk petani lokal
+                </div>
+                
+                {% else %}
+                <div class="card bg-white bg-opacity-10 border-0 p-3 text-start">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="bi bi-person-circle display-6"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Halo, {{ current_user.nama_lengkap }}!</h5>
+                            <small class="opacity-75">Siap memeriksa lahan hari ini?</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-3 justify-content-center justify-content-lg-start">
+                    <a href="{{ url_for('diagnosa') }}" class="btn btn-warning btn-lg px-4 shadow fw-bold text-dark">
+                        <i class="bi bi-heart-pulse"></i> Diagnosis Sekarang
+                    </a>
+                    <a href="{{ url_for('riwayat') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-clock-history"></i> Riwayat
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-5 d-none d-lg-block text-end position-relative">
+                <img src="{{ url_for('static', filename='img/Far.png') }}" 
+                     class="img-fluid rounded-4 shadow-lg border border-4 border-white entrance-anim"
+                     style="max-height: 420px; transform: rotate(-2deg);"
+                     alt="Smart Farming Illustration">
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<div class="features-section py-5" id="fitur">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Keunggulan Sistem</h2>
+            <p class="text-muted">Dirancang sesuai standar penelitian akademis</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-0 bg-light">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="bi bi-calculator text-success" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h4>Naïve Bayes</h4>
+                        <p class="text-muted">Algoritma probabilitas yang menghitung kemungkinan penyakit berdasarkan gejala yang dipilih.</p>
+                        <div class="badge bg-success bg-opacity-10 text-success p-2 mt-2">
+                            $$P(H|E) = \frac{P(E|H) \cdot P(H)}{P(E)}$$
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-0 bg-light">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="bi bi-clipboard-data text-primary" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h4>Data Realistis</h4>
+                        <p class="text-muted">Database penyakit dan gejala dikumpulkan berdasarkan studi literatur dan observasi lapangan.</p>
+                        <ul class="list-unstyled text-muted small mt-3">
+                            <li><i class="bi bi-check2 text-success"></i> Antraknosa</li>
+                            <li><i class="bi bi-check2 text-success"></i> Layu Fusarium</li>
+                            <li><i class="bi bi-check2 text-success"></i> Virus Kuning</li>
+                            <li><i class="bi bi-check2 text-success"></i> Bercak Daun Cercospora</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-0 bg-light">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="bi bi-speedometer2 text-warning" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h4>Dashboard Lengkap</h4>
+                        <p class="text-muted">Dilengkapi dashboard admin untuk mengelola data penyakit, gejala, dan melihat riwayat diagnosis.</p>
+                        <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-success mt-2">Lihat Demo</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="about-section py-5 bg-white" id="tentang">
+    <div class="container">
+        <div class="row align-items-center">
+            
+            <div class="col-md-6 mb-4 mb-md-0">
+                <div class="ps-4 border-start border-4 border-success">
+                    <h2 class="mb-4 fw-bold">Tentang Penelitian</h2>
+                    <p class="lead text-muted">Sistem ini dikembangkan sebagai implementasi tugas Mata Kuliah Metode Penelitian.</p>
+                    
+                    <blockquote class="blockquote bg-light p-4 rounded-3 border-0 shadow-sm my-4">
+                        <p class="mb-0 fw-bold fst-italic">
+                            "Pengembangan Sistem Pendukung Keputusan Petani untuk Diagnosis Penyakit Cabai Menggunakan Algoritma Naïve Bayes"
+                        </p>
+                    </blockquote>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                    <div class="card-header bg-success text-white py-3">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-diagram-3-fill me-2"></i> Alur Kerja Sistem</h5>
+                    </div>
+                    <div class="card-body p-4 bg-light">
+                        <div class="timeline">
+                            <div class="d-flex mb-4">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
+                                        1
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="fw-bold mb-1">Input Gejala</h6>
+                                    <p class="small text-muted mb-0">Petani memilih gejala visual yang terlihat pada tanaman di lahan.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex mb-4">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
+                                        2
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="fw-bold mb-1">Proses Hitung (Naïve Bayes)</h6>
+                                    <p class="small text-muted mb-0">Sistem memproses probabilitas berdasarkan basis data pengetahuan.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
+                                        3
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="fw-bold mb-1">Hasil & Solusi</h6>
+                                    <p class="small text-muted mb-0">Menampilkan diagnosis penyakit tertinggi beserta saran penanganan.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<div class="technology-section py-5 bg-light">
+    <div class="container">
+        <h3 class="text-center mb-5">Teknologi yang Digunakan</h3>
+        <div class="row text-center justify-content-center">
+            
+            <div class="col-4 col-md-2 mb-3">
+                <div class="tech-item p-3 h-100 d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-filetype-py text-primary" style="font-size: 2.5rem;"></i>
+                    <p class="mt-2 mb-0 fw-bold">Python</p>
+                </div>
+            </div>
+            
+            <div class="col-4 col-md-2 mb-3">
+                <div class="tech-item p-3 h-100 d-flex flex-column align-items-center justify-content-center">
+                    <img src="{{ url_for('static', filename='img/mysql.png') }}" 
+                         alt="MySQL" 
+                         style="height: 2.5rem; width: auto; object-fit: contain;">
+                    <p class="mt-2 mb-0 fw-bold">MySQL</p>
+                </div>
+            </div>
+            
+            <div class="col-4 col-md-2 mb-3">
+                <div class="tech-item p-3 h-100 d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-bootstrap" style="font-size: 2.5rem; color: #7952b3;"></i>
+                    <p class="mt-2 mb-0 fw-bold">Bootstrap 5</p>
+                </div>
+            </div>
+            
+            <div class="col-4 col-md-2 mb-3">
+                <div class="tech-item p-3 h-100 d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-calculator text-danger" style="font-size: 2.5rem;"></i>
+                    <p class="mt-2 mb-0 fw-bold">Naïve Bayes</p>
+                </div>
+            </div>
+            
+            <div class="col-4 col-md-2 mb-3">
+                <div class="tech-item p-3 h-100 d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-graph-up text-warning" style="font-size: 2.5rem;"></i>
+                    <p class="mt-2 mb-0 fw-bold">Flask</p>
+                </div>
+            </div>
+            
+            <div class="col-4 col-md-2 mb-3">
+                <div class="tech-item p-3 h-100 d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-bar-chart text-info" style="font-size: 2.5rem;"></i>
+                    <p class="mt-2 mb-0 fw-bold">Chart.js</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

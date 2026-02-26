@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="id" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SPK Diagnosis Penyakit Cabai{% endblock %}</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        body {
+            padding-top: 76px; /* Untuk navbar fixed */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        main {
+            flex: 1;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+        }
+        
+        /* Highlight Menu Aktif */
+        .nav-link.active {
+            color: #fff !important;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+
+        .nav-link:hover {
+            color: #d1e7dd !important;
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .action-card {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: #28a745;
+        }
+        
+        .action-icon {
+            font-size: 3rem;
+        }
+        
+        .diagnosa-item {
+            border-left: 4px solid #28a745;
+            background-color: #f8f9fa;
+        }
+        
+        footer {
+            margin-top: auto;
+        }
+        
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(40, 167, 69, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        
+        .tech-item {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .tech-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .probability-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            margin: 0 auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .recommendation-step {
+            counter-increment: step-counter;
+            padding-left: 40px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .recommendation-step:before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #007bff;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
+                <i class="bi bi-emoji-sunglasses"></i>
+                SPK Cabai
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.role == 'admin' %}
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active fw-bold' if request.endpoint == 'admin_dashboard' else '' }}" href="{{ url_for('admin_dashboard') }}">
+                                    <i class="bi bi-speedometer2"></i> Admin Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ 'active fw-bold' if 'admin_' in request.endpoint and request.endpoint != 'admin_dashboard' else '' }}" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-database"></i> Data Master
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item {{ 'active' if request.endpoint == 'admin_penyakit' else '' }}" href="{{ url_for('admin_penyakit') }}">
+                                        <i class="bi bi-virus"></i> Data Penyakit
+                                    </a></li>
+                                    <li><a class="dropdown-item {{ 'active' if request.endpoint == 'admin_gejala' else '' }}" href="{{ url_for('admin_gejala') }}">
+                                        <i class="bi bi-clipboard-pulse"></i> Data Gejala
+                                    </a></li>
+                                    <li><a class="dropdown-item {{ 'active' if request.endpoint == 'admin_bobot' else '' }}" href="{{ url_for('admin_bobot') }}">
+                                        <i class="bi bi-percent"></i> Data Bobot (Likelihood)
+                                    </a></li>
+                                    <li><a class="dropdown-item {{ 'active' if request.endpoint == 'admin_rekomendasi' else '' }}" href="{{ url_for('admin_rekomendasi') }}">
+                                        <i class="bi bi-journal-medical"></i> Data Rekomendasi
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item {{ 'active' if request.endpoint == 'admin_semua_diagnosa' else '' }}" href="{{ url_for('admin_semua_diagnosa') }}">
+                                        <i class="bi bi-clipboard-data"></i> Riwayat Semua Diagnosa
+                                    </a></li>
+                                    <li><a class="dropdown-item {{ 'active' if request.endpoint == 'admin_pengguna' else '' }}" href="{{ url_for('admin_pengguna') }}">
+                                        <i class="bi bi-people"></i> Data Pengguna
+                                    </a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active fw-bold' if request.endpoint == 'dashboard' else '' }}" 
+                                   href="{{ url_for('dashboard') }}">
+                                    <i class="bi bi-house"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active fw-bold' if request.endpoint in ['diagnosa', 'hasil_diagnosa'] else '' }}" 
+                                   href="{{ url_for('diagnosa') }}">
+                                    <i class="bi bi-heart-pulse"></i> Diagnosis
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active fw-bold' if request.endpoint == 'riwayat' else '' }}" 
+                                   href="{{ url_for('riwayat') }}">
+                                    <i class="bi bi-clock-history"></i> Riwayat
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active fw-bold' if request.endpoint == 'tentang_sistem' else '' }}" 
+                           href="{{ url_for('tentang_sistem') }}">
+                            <i class="bi bi-info-circle"></i> Tentang
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ 'active fw-bold' if request.endpoint == 'profile' else '' }}" 
+                               href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i> {{ current_user.nama_lengkap or current_user.username }}
+                                <span class="badge bg-light text-dark ms-1">
+                                    {{ 'Admin' if current_user.role == 'admin' else 'Petani' }}
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item {{ 'active' if request.endpoint == 'profile' else '' }}" 
+                                       href="{{ url_for('profile') }}">
+                                        <i class="bi bi-person"></i> Profil
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="{{ url_for('admin_dashboard') if current_user.role == 'admin' else url_for('dashboard') }}">
+                                        <i class="bi bi-speedometer2"></i> Dashboard
+                                    </a>
+                                </li>
+                                {% if current_user.role == 'petani' %}
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('riwayat') }}">
+                                        <i class="bi bi-clock-history"></i> Riwayat
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link {{ 'active fw-bold' if request.endpoint == 'login' else '' }}" 
+                               href="{{ url_for('login') }}">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-light ms-2 fw-bold" href="{{ url_for('register') }}">
+                                <i class="bi bi-person-plus"></i> Daftar
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mt-4 pt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-dark text-white mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="text-warning">
+                        <i class="bi bi-emoji-sunglasses"></i> SPK Diagnosis Penyakit Cabai
+                    </h5>
+                    <p class="mb-0">
+                        Sistem Pendukung Keputusan untuk diagnosis penyakit tanaman cabai 
+                        menggunakan algoritma Naïve Bayes.
+                    </p>
+                    <p class="mt-2">
+                        <a href="https://maps.app.goo.gl/3eJibizRPVKwWu8g9" target="_blank" class="text-white text-decoration-none">
+                            <i class="bi bi-geo-alt"></i> Universitas Muhammadiyah Cirebon
+                        </a>
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Navigasi</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('index') }}" class="text-white-50 text-decoration-none">Beranda</a></li>
+                        {% if current_user.is_authenticated and current_user.role == 'petani' %}
+                        <li><a href="{{ url_for('diagnosa') }}" class="text-white-50 text-decoration-none">Diagnosis</a></li>
+                        <li><a href="{{ url_for('riwayat') }}" class="text-white-50 text-decoration-none">Riwayat</a></li>
+                        {% endif %}
+                        <li><a href="{{ url_for('tentang_sistem') }}" class="text-white-50 text-decoration-none">Tentang Sistem</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6>Tim Pengembang</h6>
+                    <ul class="list-unstyled small">
+                        <li>Sanjaya (230511039)</li>
+                        <li>Yafa Emayda (230511059)</li>
+                        <li>Siti Maefaulan (230511064)</li>
+                        <li class="mt-2"><strong>Dosen:</strong> Dr. Sugiyanto, M.Kom.</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-white">
+            <div class="text-center">
+                <p class="mb-0">© 2026 SPK Diagnosis Penyakit Cabai. Kelompok 4 TI23B - Metode Penelitian.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
