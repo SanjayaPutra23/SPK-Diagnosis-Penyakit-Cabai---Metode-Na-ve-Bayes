@@ -146,7 +146,7 @@ Aplikasi dapat diakses melalui `http://localhost:5002/`.
 ### Akun Pengujian
 
 * **Admin** : username `admin` | password `admin123`
-* **Petani** : username `petani_cirebon` | password `petanin123`
+* **Petani** : username `petani_cirebon` | password `petani123`
 
 ---
 
