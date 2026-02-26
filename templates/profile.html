@@ -1,0 +1,343 @@
+{% extends "layout.html" %}
+
+{% block title %}Profil - SPK Cabai{% endblock %}
+
+{% block head %}
+<style>
+    /* --- PROFILE HEADER (TEMA SAGE GREEN) --- */
+    .profile-card-header {
+        position: relative; /* Penting agar avatar bisa diposisikan absolute terhadap box ini */
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        /* BACKGROUND BAWAH: Hijau Abu-abu Muda (Sage) */
+        background: #e9f2eb; 
+        margin-bottom: 50px;
+        overflow: visible; /* Pastikan bayangan tidak terpotong */
+    }
+
+    .profile-cover {
+        /* BACKGROUND ATAS: Gradasi Hijau Hutan ke Abu-abu */
+        background: linear-gradient(135deg, #2d4a3e 0%, #5a7c6f 100%);
+        height: 170px;
+        border-radius: 20px 20px 0 0;
+        width: 100%;
+    }
+    
+    /* Pola Dekorasi Halus di Cover */
+    .profile-cover::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-image: radial-gradient(circle at 90% 20%, rgba(255,255,255,0.1) 0%, transparent 25%);
+        border-radius: 20px 20px 0 0;
+    }
+
+    /* POSISI AVATAR DIPERBAIKI (TIDAK TENGGELAM) */
+    .profile-avatar-wrapper {
+        position: absolute;
+        top: 100px; /* 170px (tinggi cover) - 70px (setengah avatar) = 100px */
+        left: 40px;
+        z-index: 20; /* Pastikan di atas layer lain */
+    }
+    
+    .profile-avatar {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        /* Border warna sage muda agar menyatu dengan background bawah */
+        border: 6px solid #e9f2eb; 
+        background-color: #fff;
+        object-fit: cover;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #2d4a3e;
+    }
+    
+    .profile-info-header {
+        padding-top: 80px; /* Memberi ruang agar teks tidak tertutup avatar */
+        padding-left: 40px;
+        padding-right: 40px;
+        padding-bottom: 35px;
+    }
+
+    /* Teks Tema Sage */
+    .text-sage-dark { color: #1b3a2f; }
+    .text-sage-muted { color: #526961; }
+
+    /* --- FORM CARDS --- */
+    .settings-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        height: 100%;
+        transition: transform 0.3s;
+        background: white;
+    }
+    
+    .settings-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+    }
+
+    /* --- STATS CARD --- */
+    .stat-box {
+        background: #f1f7f4;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid #e2e8e5;
+        height: 100%;
+        transition: all 0.3s;
+    }
+    
+    .stat-box:hover {
+        border-color: #5a7c6f;
+        background: #e6efec;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #2d4a3e;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <div class="profile-card-header">
+        <div class="profile-cover"></div>
+        
+        <div class="profile-avatar-wrapper">
+            <div class="profile-avatar">
+                {{ user.username[0]|upper }}
+            </div>
+        </div>
+        
+        <div class="profile-info-header">
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                <div>
+                    <h2 class="fw-bold mb-1 text-sage-dark">{{ user.nama_lengkap }}</h2>
+                    <div class="text-sage-muted d-flex align-items-center gap-3 fw-bold small">
+                        <span><i class="bi bi-person-fill me-1"></i> {{ 'ADMINISTRATOR' if user.role == 'admin' else 'PETANI CABAI' }}</span>
+                        <span><i class="bi bi-geo-alt-fill me-1"></i> {{ user.lokasi|upper }}</span>
+                    </div>
+                </div>
+                <div class="mt-3 mt-md-0">
+                    <span class="badge bg-dark bg-opacity-10 text-dark px-3 py-2 rounded-pill">
+                        <i class="bi bi-calendar-event me-2"></i>Bergabung: {{ user.created_at.strftime('%d %b %Y') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card settings-card">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold m-0 text-sage-dark"><i class="bi bi-pencil-square text-success me-2"></i>Edit Informasi Pribadi</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('profile') }}">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-secondary">Username</label>
+                                <input type="text" class="form-control bg-light" value="{{ user.username }}" readonly disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-secondary">Status</label>
+                                <input type="text" class="form-control bg-light" value="{{ user.role|title }}" readonly disabled>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nama Lengkap</label>
+                            <input type="text" class="form-control" name="nama_lengkap" value="{{ user.nama_lengkap or '' }}" required>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" name="email" value="{{ user.email or '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Lokasi Lahan</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control" name="lokasi" value="{{ user.lokasi or '' }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success fw-bold py-2 shadow-sm">
+                                <i class="bi bi-check-lg me-2"></i>Simpan Perubahan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card settings-card">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold m-0 text-sage-dark"><i class="bi bi-shield-lock text-warning me-2"></i>Keamanan Akun</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('profile') }}" id="passwordForm">
+                        <div class="alert alert-light border small text-muted mb-4 d-flex align-items-center">
+                            <i class="bi bi-info-circle-fill me-2 text-warning"></i>
+                            <div>Kosongkan jika tidak ingin mengubah password.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Password Lama</label>
+                            <input type="password" class="form-control" id="password_lama" name="password_lama" placeholder="••••••">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Password Baru</label>
+                            <input type="password" class="form-control" id="password_baru" name="password_baru" placeholder="Min. 6 karakter" minlength="6">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small">Konfirmasi Password</label>
+                            <input type="password" class="form-control" id="konfirmasi_password" name="konfirmasi_password" placeholder="Ulangi password baru">
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-warning text-dark fw-bold py-2 shadow-sm" onclick="return validatePassword()">
+                                <i class="bi bi-key-fill me-2"></i>Update Password
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if user.role == 'petani' %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold m-0 text-sage-dark"><i class="bi bi-bar-chart-line text-success me-2"></i>Statistik Aktivitas</h5>
+                    <button class="btn btn-sm btn-light rounded-circle shadow-sm" onclick="location.reload()" title="Refresh Data">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+                <div class="card-body p-4" id="statsContainer">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-success" role="status"></div>
+                        <p class="text-muted mt-2 small">Mengambil data statistik...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function validatePassword() {
+    const lama = document.getElementById('password_lama').value;
+    const baru = document.getElementById('password_baru').value;
+    const konfirm = document.getElementById('konfirmasi_password').value;
+    
+    if (lama || baru || konfirm) {
+        if (!lama) { alert('Password lama wajib diisi!'); return false; }
+        if (!baru) { alert('Password baru wajib diisi!'); return false; }
+        if (baru.length < 6) { alert('Password minimal 6 karakter!'); return false; }
+        if (baru !== konfirm) { alert('Konfirmasi password tidak cocok!'); return false; }
+    }
+    return true;
+}
+
+{% if user.role == 'petani' %}
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/profile/stats')
+        .then(res => {
+            if (!res.ok) throw new Error('Gagal koneksi ke server');
+            return res.json();
+        })
+        .then(data => {
+            const container = document.getElementById('statsContainer');
+            
+            if (data.error) {
+                container.innerHTML = `<div class="alert alert-warning">${data.error}</div>`;
+                return;
+            }
+
+            const total = data.total_diagnosa || 1;
+            const pTinggi = ((data.keyakinan.tinggi || 0) / total * 100).toFixed(1);
+            const pSedang = ((data.keyakinan.sedang || 0) / total * 100).toFixed(1);
+            const pRendah = ((data.keyakinan.rendah || 0) / total * 100).toFixed(1);
+
+            let html = `
+                <div class="row g-4 align-items-center">
+                    <div class="col-md-4">
+                        <div class="stat-box d-flex flex-column justify-content-center">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-2">Total Diagnosis</h6>
+                            <div class="stat-number">${data.total_diagnosa}</div>
+                            <small class="text-success fw-bold"><i class="bi bi-check-circle-fill"></i> Kali dilakukan</small>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="p-3 border rounded-3 bg-white h-100">
+                            <h6 class="fw-bold mb-3 small text-uppercase text-muted">Tingkat Keyakinan Hasil</h6>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between small fw-bold mb-1">
+                                    <span>Tinggi (>70%)</span>
+                                    <span class="text-success">${data.keyakinan.tinggi}x</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: ${pTinggi}%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between small fw-bold mb-1">
+                                    <span>Sedang (40-70%)</span>
+                                    <span class="text-warning">${data.keyakinan.sedang}x</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: ${pSedang}%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="d-flex justify-content-between small fw-bold mb-1">
+                                    <span>Rendah (<40%)</span>
+                                    <span class="text-secondary">${data.keyakinan.rendah}x</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-secondary" style="width: ${pRendah}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('statsContainer').innerHTML = 
+                '<div class="text-center py-4 text-muted"><i class="bi bi-info-circle display-4 mb-2 d-block opacity-25"></i>Belum ada data statistik tersedia.</div>';
+        });
+});
+{% endif %}
+</script>
+{% endblock %}

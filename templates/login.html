@@ -1,0 +1,124 @@
+{% extends "layout.html" %}
+{% block title %}Login - SPK Cabai{% endblock %}
+
+{% block content %}
+<style>
+    /* CSS ANIMASI LOGIN */
+    .entrance-anim { animation: slideInLeft 0.8s ease-out; }
+    
+    @keyframes slideInLeft { 
+        from { transform: translateX(-50px); opacity: 0; } 
+        to { transform: translateX(0); opacity: 1; } 
+    }
+
+    .exit-anim { 
+        transform: translateX(-50px) !important; 
+        opacity: 0 !important; 
+        transition: all 0.5s ease; 
+    }
+</style>
+
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-lg-10">
+        <div id="mainCard" class="card shadow-lg overflow-hidden border-0 entrance-anim" style="border-radius: 20px;">
+            <div class="row g-0">
+                
+                <div class="col-md-6 d-none d-md-block bg-success text-white position-relative">
+                    <div class="p-5 text-center h-100 d-flex flex-column justify-content-center align-items-center">
+                        <img src="{{ url_for('static', filename='img/farmer-login.jpg') }}" 
+                             class="img-fluid mb-3 rounded-circle shadow" 
+                             style="width: 200px; height: 250px; object-fit: cover; border: 4px solid white;"
+                             onerror="this.src='https://cdn-icons-png.flaticon.com/512/3022/3022938.png'">
+                        
+                        <h3 class="fw-bold mt-3">Selamat Datang Petani!</h3>
+                        <p class="small">
+                            Sistem Pendukung Keputusan Diagnosis Penyakit Cabai
+                            menggunakan Metode Naïve Bayes.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 bg-white">
+                    <div class="p-5">
+                        <div class="text-center mb-4">
+                            <h3 class="fw-bold text-success">Login Sistem</h3>
+                            <p class="text-muted">Masuk untuk memulai diagnosis</p>
+                        </div>
+
+                        <form method="POST" action="{{ url_for('login') }}">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">USERNAME</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-person text-success"></i>
+                                    </span>
+                                    <input type="text" class="form-control bg-light border-start-0" 
+                                           id="username" name="username" placeholder="Masukkan username" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">PASSWORD</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-lock text-success"></i>
+                                    </span>
+                                    <input type="password" class="form-control bg-light border-start-0 border-end-0" 
+                                           id="password" name="password" placeholder="Masukkan password" required>
+                                    <button class="btn btn-light border border-start-0" type="button" id="togglePassword">
+                                        <i class="bi bi-eye text-muted"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-success btn-lg shadow-sm" style="border-radius: 10px;">
+                                    MASUK SEKARANG <i class="bi bi-arrow-right-short"></i>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="text-center mt-4">
+                            <span class="text-muted">Belum punya akun?</span>
+                            <a href="{{ url_for('register') }}" onclick="goToRegister(event)" class="text-success fw-bold text-decoration-none">
+                                Daftar Disini
+                            </a>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-3">
+            <a href="{{ url_for('index') }}" class="text-muted text-decoration-none small">
+                <i class="bi bi-arrow-left"></i> Kembali ke Halaman Utama
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Script Show/Hide Password
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    const icon = togglePassword.querySelector('i');
+
+    togglePassword.addEventListener('click', function (e) {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        icon.classList.toggle('bi-eye');
+        icon.classList.toggle('bi-eye-slash');
+    });
+
+    // 2. Script Animasi Pindah ke Register
+    function goToRegister(e) {
+        e.preventDefault(); 
+        const card = document.getElementById('mainCard');
+        card.classList.add('exit-anim');
+        setTimeout(() => {
+            window.location.href = "{{ url_for('register') }}";
+        }, 500);
+    }
+</script>
+{% endblock %}

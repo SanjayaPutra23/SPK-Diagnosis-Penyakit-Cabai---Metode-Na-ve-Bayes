@@ -1,0 +1,173 @@
+{% extends "layout.html" %}
+{% block title %}Daftar - SPK Cabai{% endblock %}
+
+{% block content %}
+<style>
+    /* CSS ANIMASI REGISTER */
+    .entrance-anim { animation: slideInRight 0.8s ease-out; }
+    
+    @keyframes slideInRight { 
+        from { transform: translateX(50px); opacity: 0; } 
+        to { transform: translateX(0); opacity: 1; } 
+    }
+
+    .exit-anim { 
+        transform: translateX(50px) !important; 
+        opacity: 0 !important; 
+        transition: all 0.5s ease; 
+    }
+</style>
+
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-lg-10">
+        <div id="registerCard" class="card shadow-lg overflow-hidden border-0 entrance-anim" style="border-radius: 20px;">
+            <div class="row g-0">
+                
+                <div class="col-md-7 bg-white">
+                    <div class="p-5">
+                        <div class="text-start mb-4">
+                            <h3 class="fw-bold text-success">Daftar Akun Baru</h3>
+                            <p class="text-muted">Lengkapi data diri untuk mendaftar ke sistem.</p>
+                        </div>
+
+                        <form method="POST" action="{{ url_for('register') }}">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small fw-bold">USERNAME</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-person-badge text-success"></i>
+                                        </span>
+                                        <input type="text" class="form-control bg-light border-start-0" 
+                                               id="username" name="username" placeholder="Buat username" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small fw-bold">PASSWORD</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-lock text-success"></i>
+                                        </span>
+                                        <input type="password" class="form-control bg-light border-start-0 border-end-0" 
+                                               id="password" name="password" placeholder="Min. 6 karakter" required>
+                                        <button class="btn btn-light border border-start-0" type="button" id="togglePassword">
+                                            <i class="bi bi-eye text-muted"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">NAMA LENGKAP</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-person text-success"></i>
+                                    </span>
+                                    <input type="text" class="form-control bg-light border-start-0" 
+                                           id="nama_lengkap" name="nama_lengkap" placeholder="Nama lengkap Anda" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small fw-bold">EMAIL</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-envelope text-success"></i>
+                                        </span>
+                                        <input type="email" class="form-control bg-light border-start-0" 
+                                               id="email" name="email" placeholder="contoh@email.com">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small fw-bold">LOKASI LAHAN</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-geo-alt text-success"></i>
+                                        </span>
+                                        <input type="text" class="form-control bg-light border-start-0" 
+                                               id="lokasi" name="lokasi" placeholder="Kota/Kabupaten" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label text-muted small fw-bold">DAFTAR SEBAGAI</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-shield-lock text-success"></i>
+                                    </span>
+                                    <select class="form-select bg-light border-start-0" name="role" required>
+                                        <option value="petani" selected>Petani (Pengguna Umum)</option>
+                                        <option value="admin">Admin (Pengelola Sistem)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 10px;">
+                                    DAFTAR SEKARANG <i class="bi bi-person-plus-fill"></i>
+                                </button>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <span class="text-muted">Sudah punya akun?</span>
+                                <a href="{{ url_for('login') }}" onclick="goToLogin(event)" class="text-primary fw-bold text-decoration-none">
+                                    Login Disini
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-md-5 d-none d-md-block bg-primary text-white position-relative">
+                    <div class="p-5 text-center h-100 d-flex flex-column justify-content-center align-items-center">
+                        <img src="{{ url_for('static', filename='img/farmer-register.jpg') }}" 
+                             class="img-fluid mb-4 rounded-circle shadow" 
+                             style="width: 250px; height: 250px; object-fit: cover; border: 4px solid white;"
+                             onerror="this.src='https://cdn-icons-png.flaticon.com/512/2622/2622112.png'">
+                        
+                        <h3 class="fw-bold">Bergabunglah Bersama Kami</h3>
+                        <p class="small px-3">
+                            Dapatkan akses diagnosis penyakit tanaman cabai yang cepat dan akurat.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+        <div class="text-center mt-3">
+            <a href="{{ url_for('index') }}" class="text-muted text-decoration-none small">
+                <i class="bi bi-arrow-left"></i> Kembali ke Halaman Utama
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Script Show/Hide Password
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    const icon = togglePassword.querySelector('i');
+
+    togglePassword.addEventListener('click', function (e) {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        icon.classList.toggle('bi-eye');
+        icon.classList.toggle('bi-eye-slash');
+    });
+
+    // 2. Script Animasi Balik ke Login
+    function goToLogin(e) {
+        e.preventDefault(); 
+        const card = document.getElementById('registerCard');
+        card.classList.add('exit-anim');
+        setTimeout(() => {
+            window.location.href = "{{ url_for('login') }}";
+        }, 500);
+    }
+</script>
+{% endblock %}
