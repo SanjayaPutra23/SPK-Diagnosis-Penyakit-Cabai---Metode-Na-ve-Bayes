@@ -1,0 +1,138 @@
+{% extends "layout.html" %}
+
+{% block title %}Data Rekomendasi - Admin SPK{% endblock %}
+
+{% block head %}
+<style>
+    /* --- CSS THEME HIJAU --- */
+    .content-wrapper { padding: 20px; background-color: #f8f9fa; min-height: 100vh; }
+    .stats-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.04); border-left: 4px solid #198754; transition: transform 0.3s; height: 100%; }
+    .stats-card .number { font-size: 1.8rem; font-weight: 700; color: #198754; line-height: 1; }
+    .stats-card .label { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
+    .search-box { position: relative; max-width: 300px; width: 100%; }
+    .search-box input { border-radius: 50px; padding-left: 40px; border: 1px solid #e0e0e0; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: all 0.3s; }
+    .search-box input:focus { border-color: #198754; box-shadow: 0 4px 10px rgba(25, 135, 84, 0.1); }
+    .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa; }
+    .table-card { background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border: none; overflow: hidden; position: relative; }
+    .table-header-info { padding: 15px 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .table-header-info .info-text { font-size: 0.9rem; color: #495057; }
+    .table-scroll-area { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
+    .table-scroll-area::-webkit-scrollbar { width: 8px; height: 8px; }
+    .table-scroll-area::-webkit-scrollbar-track { background: #f1f1f1; }
+    .table-scroll-area::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+    .table { margin-bottom: 0; border-collapse: separate; border-spacing: 0; width: 100%; }
+    .table thead th { position: sticky; top: 0; background: linear-gradient(135deg, #198754 0%, #20c997 100%); color: white; z-index: 2; padding: 18px 15px; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; border: none; }
+    .table tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; color: #444; font-size: 0.95rem; }
+    .table tbody tr:nth-child(even) { background-color: #fcfcfc; }
+    .table tbody tr:hover { background-color: #f0fdf4; }
+    
+    .solusi-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #198754;
+        padding: 12px 15px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        white-space: pre-line; /* Mempertahankan format enter (baris baru) */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h3 class="fw-bold text-dark mb-1"><i class="bi bi-journal-medical text-success me-2"></i>Data Rekomendasi</h3>
+            <p class="text-muted mb-0 small">Prosedur penanganan dan pengobatan untuk setiap penyakit.</p>
+            <div class="mt-2">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success">
+                    <i class="bi bi-book me-1"></i> Sumber Prosedur Penanganan: Meilin (2014)
+                </span>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex justify-content-md-end gap-3 align-items-center mt-3 mt-md-0">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" class="form-control" placeholder="Cari Penyakit atau Solusi...">
+            </div>
+            <button type="button" class="btn btn-secondary rounded-pill px-4 fw-bold shadow-sm" disabled title="Terkunci: Data Sesuai Pakar">
+                <i class="bi bi-lock-fill me-2"></i>Terkunci
+            </button>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-header-info">
+            <div class="info-text">
+                Menampilkan <strong id="showingCount">{{ rek_list|length }}</strong> prosedur penanganan
+            </div>
+            <div class="badge bg-success bg-opacity-10 text-success border border-success">
+                <i class="bi bi-book me-1"></i> Referensi: Meilin (2014) dkk.
+            </div>
+        </div>
+        
+        <div class="table-scroll-area">
+            <table class="table" id="rekTable">
+                <thead>
+                    <tr>
+                        <th width="25%">NAMA PENYAKIT</th>
+                        <th width="15%">SUMBER LITERATUR</th>
+                        <th width="60%">PROSEDUR PENANGANAN</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% if rek_list %}
+                        {% for rek in rek_list %}
+                        <tr class="rek-row">
+                            <td>
+                                <span class="fw-bold text-success">{{ rek.penyakit_rel.nama_penyakit }}</span>
+                                <div class="small text-muted mt-1">{{ rek.penyakit_rel.kode_penyakit }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary rounded-pill">
+                                    <i class="bi bi-journal-text me-1"></i> {{ rek.sumber_literatur }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="solusi-box text-dark">
+                                    {{ rek.prosedur_penanganan }}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center py-5 text-muted">Belum ada data rekomendasi penanganan.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('.rek-row');
+    const count = document.getElementById('showingCount');
+    
+    if(searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            let visible = 0;
+            const term = this.value.toLowerCase();
+            
+            rows.forEach(row => {
+                if(row.innerText.toLowerCase().includes(term)) {
+                    row.style.display = '';
+                    visible++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            if(count) count.textContent = visible;
+        });
+    }
+});
+</script>
+{% endblock %}
