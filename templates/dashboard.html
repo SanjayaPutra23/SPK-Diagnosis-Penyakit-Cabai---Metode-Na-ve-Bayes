@@ -1,0 +1,345 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard - SPK Cabai{% endblock %}
+
+{% block head %}
+<style>
+    /* --- DASHBOARD HEADER --- */
+    .welcome-card {
+        background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+        border: none;
+        border-radius: 15px;
+        color: white;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(25, 135, 84, 0.2);
+    }
+    
+    .welcome-card::after {
+        content: "";
+        position: absolute;
+        top: -50px; right: -50px;
+        width: 200px; height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+
+    /* --- STATS CARD --- */
+    .stat-card-modern {
+        background: white;
+        border: none;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        transition: transform 0.3s;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        border-left: 5px solid transparent;
+    }
+    
+    .stat-card-modern:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    }
+    
+    .stat-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        font-size: 1.8rem;
+    }
+
+    /* Warna Aksen Card */
+    .border-primary { border-color: #0d6efd !important; }
+    .border-success { border-color: #198754 !important; }
+    .border-warning { border-color: #ffc107 !important; }
+    .border-info { border-color: #0dcaf0 !important; }
+
+    /* --- ACTION CARDS --- */
+    .action-box {
+        background: white;
+        border: 1px solid #f0f0f0;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        transition: all 0.3s;
+        height: 100%;
+        display: block;
+        text-decoration: none;
+        color: #333;
+    }
+    
+    .action-box:hover {
+        background: #f8fff9;
+        border-color: #198754;
+        transform: translateY(-5px);
+        color: #198754;
+    }
+    
+    .action-icon-circle {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 15px;
+        transition: transform 0.3s;
+    }
+    
+    .action-box:hover .action-icon-circle {
+        transform: scale(1.1);
+    }
+
+    /* --- MATHJAX FORMULA --- */
+    .formula-box {
+        background: #212529;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        font-family: 'Times New Roman', serif;
+        font-size: 1.2rem;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <div class="card welcome-card p-4">
+        <div class="d-flex justify-content-between align-items-center position-relative z-1">
+            <div>
+                <h2 class="fw-bold mb-1">
+                    <i class="bi bi-house-door-fill me-2"></i>Dashboard Petani
+                </h2>
+                <p class="mb-0 opacity-90">
+                    Selamat datang, <strong>{{ user.nama_lengkap or user.username }}</strong>! 
+                    <span class="mx-2">|</span> 
+                    <i class="bi bi-person-badge-fill"></i> Peran: Petani
+                </p>
+            </div>
+            <div class="d-none d-md-block text-end">
+                <h1 class="display-4 fw-bold mb-0">{{ total_diagnosa }}</h1>
+                <small class="opacity-75">Total Diagnosis</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card-modern border-primary">
+                <div class="stat-icon-wrapper bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-bar-chart-line-fill"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold mb-0 text-dark">{{ total_diagnosa }}</h3>
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total Diagnosa</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card-modern border-success">
+                <div class="stat-icon-wrapper bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-tree-fill"></i>
+                </div>
+                <div>
+                    {% set veg_count = [] %}
+                    {% for diagnosa in diagnosa_terbaru %}
+                        {% if diagnosa.fase_input == 'vegetatif' %}
+                            {% set _ = veg_count.append(1) %}
+                        {% endif %}
+                    {% endfor %}
+                    <h3 class="fw-bold mb-0 text-dark">{{ veg_count|length }}</h3>
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Fase Vegetatif</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card-modern border-warning">
+                <div class="stat-icon-wrapper bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-flower1"></i>
+                </div>
+                <div>
+                    {% set gen_count = [] %}
+                    {% for diagnosa in diagnosa_terbaru %}
+                        {% if diagnosa.fase_input == 'generatif' %}
+                            {% set _ = gen_count.append(1) %}
+                        {% endif %}
+                    {% endfor %}
+                    <h3 class="fw-bold mb-0 text-dark">{{ gen_count|length }}</h3>
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Fase Generatif</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card-modern border-info">
+                <div class="stat-icon-wrapper bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <div>
+                    {% set total_prob = namespace(value=0) %}
+                    {% for d in diagnosa_terbaru %}
+                        {% set total_prob.value = total_prob.value + d.prob_persen %}
+                    {% endfor %}
+                    <h3 class="fw-bold mb-0 text-dark">
+                        {% if diagnosa_terbaru|length > 0 %}
+                            {{ (total_prob.value / diagnosa_terbaru|length)|round(1) }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </h3>
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Rata-rata Probabilitas</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Aksi Cepat</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <a href="{{ url_for('diagnosa') }}" class="action-box">
+                        <div class="action-icon-circle bg-success bg-opacity-10 text-success">
+                            <i class="bi bi-heart-pulse-fill"></i>
+                        </div>
+                        <h5 class="fw-bold">Diagnosis Baru</h5>
+                        <p class="text-muted small mb-0">Periksa kesehatan tanaman cabai Anda sekarang</p>
+                    </a>
+                </div>
+                
+                <div class="col-md-6">
+                    <a href="{{ url_for('riwayat') }}" class="action-box">
+                        <div class="action-icon-circle bg-primary bg-opacity-10 text-primary">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <h5 class="fw-bold">Riwayat Diagnosis</h5>
+                        <p class="text-muted small mb-0">Lihat dan cetak hasil diagnosis sebelumnya</p>
+                    </a>
+                </div>
+                
+                <div class="col-md-6">
+                    <a href="{{ url_for('tentang_sistem') }}" class="action-box">
+                        <div class="action-icon-circle bg-warning bg-opacity-10 text-warning">
+                            <i class="bi bi-book-half"></i>
+                        </div>
+                        <h5 class="fw-bold">Informasi Sistem</h5>
+                        <p class="text-muted small mb-0">Pelajari tentang metode Naïve Bayes</p>
+                    </a>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="action-box cursor-default" style="cursor: default;">
+                        <div class="action-icon-circle bg-info bg-opacity-10 text-info">
+                            <i class="bi bi-pie-chart-fill"></i>
+                        </div>
+                        <h5 class="fw-bold">Statistik Fase (Terbaru)</h5>
+                        <p class="text-muted small mb-0">
+                            {% if diagnosa_terbaru|length > 0 %}
+                                {% set persen_veg = (veg_count|length / diagnosa_terbaru|length * 100)|round(0) %}
+                                {% set persen_gen = (gen_count|length / diagnosa_terbaru|length * 100)|round(0) %}
+                                <strong>Vegetatif: {{ persen_veg }}%</strong><br>
+                                <strong>Generatif: {{ persen_gen }}%</strong>
+                            {% else %}
+                                Belum ada data
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-header bg-primary text-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-clock me-2"></i>Diagnosa Terbaru</h6>
+                    <span class="badge bg-white text-primary">{{ diagnosa_terbaru|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if diagnosa_terbaru %}
+                        <div class="list-group list-group-flush">
+                        {% for diagnosa in diagnosa_terbaru %}
+                            <div class="list-group-item p-3 border-0 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <h6 class="fw-bold text-dark mb-0 pe-2">{{ diagnosa.penyakit_rel.nama_penyakit if diagnosa.penyakit_rel else 'Tidak Teridentifikasi' }}</h6>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill" style="font-size: 0.7rem; white-space: nowrap;">
+                                        Fase {{ diagnosa.fase_input|title }}
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <small class="text-muted">{{ diagnosa.tanggal_diagnosa.strftime('%d %b %Y') }}</small>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 60px; height: 6px;">
+                                            <div class="progress-bar bg-success" style="width: {{ diagnosa.prob_persen }}%"></div>
+                                        </div>
+                                        <small class="fw-bold text-success">{{ diagnosa.prob_persen|round(1) }}%</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                        <div class="p-3 text-center">
+                            <a href="{{ url_for('riwayat') }}" class="btn btn-sm btn-outline-primary rounded-pill w-100">Lihat Semua</a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox display-4 opacity-25"></i>
+                            <p class="mt-2 small">Belum ada riwayat.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 bg-dark text-white">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-calculator-fill me-2"></i>Metode Perhitungan: Naïve Bayes</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-lg-5 mb-4 mb-lg-0 text-center">
+                            <p class="text-white-50 small mb-2 text-uppercase fw-bold">Rumus Dasar Teorema Bayes</p>
+                            <div class="formula-box shadow-lg border border-secondary">
+                                $$ P(H|E) = \frac{P(E|H) \times P(H)}{P(E)} $$
+                            </div>
+                            <p class="text-white-50 small mb-2 text-uppercase fw-bold mt-4">Untuk Multiple Gejala</p>
+                            <div class="formula-box shadow-lg border border-secondary">
+                                $$ P(H|E_1...E_n) \propto P(H) \times \prod_{i=1}^{n} P(E_i|H) $$
+                            </div>
+                        </div>
+                        <div class="col-lg-7">
+                            <h6 class="fw-bold text-warning mb-3">Keterangan Variabel:</h6>
+                            <ul class="list-unstyled small text-white-50">
+                                <li class="mb-2"><strong class="text-white">P(H|E)</strong> : Probabilitas Posterior (Peluang penyakit terjadi setelah gejala muncul).</li>
+                                <li class="mb-2"><strong class="text-white">P(E|H)</strong> : Likelihood (Peluang gejala muncul pada penyakit tertentu).</li>
+                                <li class="mb-2"><strong class="text-white">P(H)</strong> : Prior Probability (Peluang awal penyakit sebelum ada gejala).</li>
+                                <li class="mb-2"><strong class="text-white">P(E)</strong> : Probabilitas Evidence (Peluang munculnya gejala, sebagai pembagi normalisasi).</li>
+                            </ul>
+                            <div class="alert alert-warning bg-warning bg-opacity-10 border-0 text-warning d-flex align-items-center mt-3">
+                                <i class="bi bi-lightbulb-fill fs-4 me-3"></i>
+                                <small>Sistem ini menggunakan asumsi <strong>independensi</strong> antar gejala untuk menyederhanakan perhitungan komputasi yang kompleks.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
