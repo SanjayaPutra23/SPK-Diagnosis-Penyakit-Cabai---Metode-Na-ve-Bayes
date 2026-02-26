@@ -1,0 +1,422 @@
+{% extends "layout.html" %}
+
+{% block title %}Diagnosis - SPK Cabai{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+<style>
+    /* --- HERO HEADER --- */
+    .diagnosis-hero {
+        background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+        border-radius: 20px;
+        padding: 40px;
+        color: white;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 20px rgba(25, 135, 84, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .diagnosis-hero::before {
+        content: '';
+        position: absolute;
+        top: -30px; right: -30px;
+        width: 150px; height: 150px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+
+    /* --- INTERACTIVE SYMPTOM CARDS (Hijau Theme) --- */
+    .symptom-checkbox {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    /* Tampilan Default: Putih dengan border hijau muda */
+    .symptom-card {
+        display: flex;
+        align-items: start;
+        background: #ffffff;
+        border: 2px solid #e0f0e9;
+        border-radius: 15px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        height: 100%;
+        position: relative;
+        box-shadow: 0 3px 10px rgba(25, 135, 84, 0.05);
+    }
+
+    .symptom-card:hover {
+        background: #f8fdfa;
+        border-color: #198754;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(25, 135, 84, 0.1);
+    }
+
+    /* Tampilan SAAT DIPILIH: Hijau Muda */
+    .symptom-checkbox:checked + .symptom-card {
+        background-color: #f0f9f4;
+        border-color: #198754;
+        box-shadow: 0 8px 20px rgba(25, 135, 84, 0.15);
+        transform: translateY(-3px);
+    }
+
+    /* Ikon Centang Hijau */
+    .check-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        border: 2px solid #d1e7dd;
+        color: #d1e7dd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-right: 15px;
+        transition: all 0.2s;
+        background: white;
+    }
+
+    .symptom-checkbox:checked + .symptom-card .check-icon {
+        background-color: #198754;
+        border-color: #198754;
+        color: white;
+    }
+
+    .symptom-title {
+        font-weight: 700;
+        color: #2d3e2f;
+        margin-bottom: 5px;
+        transition: color 0.2s;
+    }
+
+    .symptom-checkbox:checked + .symptom-card .symptom-title {
+        color: #198754;
+    }
+
+    /* --- CATEGORY HEADERS dengan COUNTER --- */
+    .category-section {
+        background: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        border: 1px solid #e9ecef;
+    }
+
+    .category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+
+    .category-title {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        color: #2d3e2f;
+    }
+    
+    .cat-icon-box {
+        width: 42px; 
+        height: 42px;
+        border-radius: 10px;
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 1.3rem;
+        color: white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Counter untuk jumlah gejala per kategori */
+    .category-counter {
+        background: #e9f7ef;
+        color: #198754;
+        padding: 6px 15px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        border: 1px solid #d1e7dd;
+        min-width: 100px;
+        text-align: center;
+    }
+
+    .counter-number {
+        font-size: 1.1rem;
+        margin-right: 5px;
+    }
+
+    /* Grid layout yang lebih rapih */
+    .symptoms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .symptoms-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* --- FLOATING ACTION BAR --- */
+    .floating-action-bar {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 700px;
+        background: #212529;
+        padding: 12px 20px;
+        border-radius: 50px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+        animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+        from { bottom: -100px; }
+        to { bottom: 30px; }
+    }
+
+    /* Warna kategori yang konsisten dengan tema hijau */
+    .category-success .cat-icon-box { background: linear-gradient(135deg, #198754, #20c997); }
+    .category-warning .cat-icon-box { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+    .category-danger .cat-icon-box { background: linear-gradient(135deg, #dc3545, #fd7e14); }
+    .category-secondary .cat-icon-box { background: linear-gradient(135deg, #6c757d, #adb5bd); }
+    .category-primary .cat-icon-box { background: linear-gradient(135deg, #0d6efd, #0dcaf0); }
+
+    .category-success .category-counter { background: #e9f7ef; color: #198754; border-color: #d1e7dd; }
+    .category-warning .category-counter { background: #fff3cd; color: #ffc107; border-color: #ffe69c; }
+    .category-danger .category-counter { background: #f8d7da; color: #dc3545; border-color: #f5c2c7; }
+    .category-secondary .category-counter { background: #e2e3e5; color: #6c757d; border-color: #d3d6d8; }
+    .category-primary .category-counter { background: #cff4fc; color: #055160; border-color: #b6effb; }
+    
+    /* Perbaikan untuk ikon agar lebih jelas */
+    .bi-leaf, .bi-leaf-fill, .bi-tree, .bi-tree-fill, .bi-apple, .bi-flower2 {
+        filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-5">
+    
+    <div class="diagnosis-hero d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-heart-pulse-fill me-2"></i>Diagnosis Penyakit</h2>
+            <p class="mb-0 opacity-90">Tentukan fase pertumbuhan lalu klik pada kotak gejala yang sesuai dengan kondisi tanaman Anda.</p>
+            <div class="mt-2">
+                <span class="badge bg-light text-success border border-light bg-opacity-10">
+                    <i class="bi bi-book me-1"></i> Sumber Indikator: Meilin (2014) & Lestari (2025)
+                </span>
+            </div>
+        </div>
+        <div class="d-none d-md-block">
+            <i class="bi bi-clipboard-check display-3 opacity-25"></i>
+        </div>
+    </div>
+    
+    <form method="POST" action="{{ url_for('diagnosa') }}" id="diagnosisForm">
+        
+        <div class="category-section category-primary">
+            <div class="category-header">
+                <div class="category-title">
+                    <div class="cat-icon-box">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    1. PILIH FASE PERTUMBUHAN (WAJIB)
+                </div>
+                <div class="category-counter">
+                    Status: <span id="fase-status" class="text-danger fw-bold">Belum Dipilih</span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <label class="position-relative w-100">
+                        <input type="radio" name="fase_pertumbuhan" value="vegetatif" class="symptom-checkbox fase-radio" required>
+                        <div class="symptom-card">
+                            <div class="check-icon">
+                                <i class="bi bi-check-circle-fill" style="font-size: 1.2rem;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="symptom-title">Fase Vegetatif</div>
+                                <p class="text-muted small mb-0 lh-sm">Fase pembentukan daun, akar, dan batang. Biasanya terjadi sebelum tanaman mulai berbunga.</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+                <div class="col-md-6">
+                    <label class="position-relative w-100">
+                        <input type="radio" name="fase_pertumbuhan" value="generatif" class="symptom-checkbox fase-radio" required>
+                        <div class="symptom-card">
+                            <div class="check-icon">
+                                <i class="bi bi-check-circle-fill" style="font-size: 1.2rem;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="symptom-title">Fase Generatif</div>
+                                <p class="text-muted small mb-0 lh-sm">Fase produksi/reproduksi tanaman. Terjadi pada saat tanaman mulai berbunga dan berbuah.</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mb-3 ms-2 mt-4 text-secondary">2. PILIH GEJALA YANG TERLIHAT</h5>
+
+        {% for kategori, gejala_list in gejala_by_kategori.items() %}
+            
+            {% set theme_class = 'category-secondary' %}
+            {% set cat_icon = 'grid' %}
+            
+            {% if kategori == 'daun' %}
+                {% set theme_class = 'category-success' %}
+                {% set cat_icon = 'leaf' %}
+            {% elif kategori == 'batang' %}
+                {% set theme_class = 'category-warning' %}
+                {% set cat_icon = 'tree' %}
+            {% elif kategori == 'buah' %}
+                {% set theme_class = 'category-danger' %}
+                {% set cat_icon = 'apple' %}
+            {% elif kategori == 'akar' %}
+                {% set theme_class = 'category-secondary' %}
+                {% set cat_icon = 'flower2' %}
+            {% endif %}
+
+            <div class="category-section {{ theme_class }}">
+                <div class="category-header">
+                    <div class="category-title">
+                        <div class="cat-icon-box">
+                            <i class="bi bi-{{ cat_icon }}"></i>
+                        </div>
+                        GEJALA PADA {{ kategori|upper }}
+                    </div>
+                    <div class="category-counter">
+                        <span class="counter-number">{{ gejala_list|length }}</span>
+                        <span>Gejala</span>
+                    </div>
+                </div>
+
+                <div class="symptoms-grid">
+                    {% for gejala in gejala_list %}
+                    <label class="position-relative">
+                        <input type="checkbox" name="gejala" value="{{ gejala.id }}" class="symptom-checkbox gejala-checkbox">
+                        <div class="symptom-card">
+                            <div class="check-icon">
+                                <i class="bi bi-check-lg" style="font-size: 1rem;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="symptom-title">{{ gejala.nama_gejala }}</div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span class="badge bg-success bg-opacity-10 text-success" style="font-size: 0.7rem; font-weight: 600;">
+                                        {{ gejala.kode_gejala }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="floating-action-bar">
+            <div class="d-flex align-items-center">
+                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                     style="width: 35px; height: 35px; font-weight: bold;" id="count-badge">
+                    0
+                </div>
+                <div style="line-height: 1.2;">
+                    <h6 class="mb-0 fw-bold text-white" style="font-size: 0.9rem;">Gejala Dipilih</h6>
+                    <small class="text-white-50" id="status-text" style="font-size: 0.75rem;">
+                        Pilih Fase & Gejala
+                    </small>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-bold text-white shadow-sm" id="btn-diagnosa" disabled>
+                <i class="bi bi-calculator me-2"></i>Proses Diagnosis
+            </button>
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const gejalaCheckboxes = document.querySelectorAll('.gejala-checkbox');
+        const faseRadios = document.querySelectorAll('.fase-radio');
+        const countBadge = document.getElementById('count-badge');
+        const btnDiagnosa = document.getElementById('btn-diagnosa');
+        const statusText = document.getElementById('status-text');
+        const faseStatus = document.getElementById('fase-status');
+
+        // Fungsi mengecek status validasi form
+        function validateForm() {
+            // Hitung gejala yang dipilih
+            const checkedGejalaCount = document.querySelectorAll('.gejala-checkbox:checked').length;
+            countBadge.innerText = checkedGejalaCount;
+            
+            // Cek apakah fase sudah dipilih
+            const isFaseSelected = document.querySelector('.fase-radio:checked') !== null;
+            
+            if (isFaseSelected) {
+                faseStatus.textContent = 'Sudah Dipilih';
+                faseStatus.classList.replace('text-danger', 'text-success');
+            }
+
+            // Aturan: Tombol aktif JIKA Fase dipilih AND Gejala minimal 1 dipilih
+            if (checkedGejalaCount > 0 && isFaseSelected) {
+                countBadge.style.backgroundColor = '#198754';
+                btnDiagnosa.disabled = false;
+                statusText.innerHTML = `<span class="text-success fw-bold">${checkedGejalaCount} gejala dipilih</span> • Fase OKE`;
+            } else if (!isFaseSelected && checkedGejalaCount > 0) {
+                countBadge.style.backgroundColor = '#ffc107';
+                btnDiagnosa.disabled = true;
+                statusText.innerHTML = `⚠️ Pilih Fase Pertumbuhan di atas!`;
+            } else {
+                countBadge.style.backgroundColor = '#6c757d';
+                btnDiagnosa.disabled = true;
+                statusText.innerHTML = `Pilih Fase & minimal 1 Gejala`;
+            }
+        }
+
+        // Tambahkan event listener ke setiap input
+        gejalaCheckboxes.forEach(chk => chk.addEventListener('change', validateForm));
+        faseRadios.forEach(radio => radio.addEventListener('change', validateForm));
+
+        // Animasi awal
+        document.querySelectorAll('.category-section').forEach((section, index) => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                section.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                section.style.opacity = '1';
+                section.style.transform = 'translateY(0)';
+            }, 100 * index);
+        });
+        
+        validateForm(); // Inisialisasi status saat load
+    });
+</script>
+{% endblock %}
