@@ -135,8 +135,13 @@
         justify-content: center;
         margin-right: 15px;
         font-size: 1.3rem;
-        color: white;
+        color: white !important; /* Memastikan ikon berwarna putih */
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Memastikan semua ikon di dalam cat-icon-box berwarna putih */
+    .cat-icon-box i {
+        color: white !important;
     }
 
     /* Counter untuk jumlah gejala per kategori */
@@ -195,7 +200,7 @@
         to { bottom: 30px; }
     }
 
-    /* Warna kategori yang konsisten dengan tema hijau */
+    /* Warna kategori yang konsisten dengan tema hijau - Background untuk icon box */
     .category-success .cat-icon-box { background: linear-gradient(135deg, #198754, #20c997); }
     .category-warning .cat-icon-box { background: linear-gradient(135deg, #ffc107, #fd7e14); }
     .category-danger .cat-icon-box { background: linear-gradient(135deg, #dc3545, #fd7e14); }
@@ -208,10 +213,31 @@
     .category-secondary .category-counter { background: #e2e3e5; color: #6c757d; border-color: #d3d6d8; }
     .category-primary .category-counter { background: #cff4fc; color: #055160; border-color: #b6effb; }
     
-    /* Perbaikan untuk ikon agar lebih jelas */
-    .bi-leaf, .bi-leaf-fill, .bi-tree, .bi-tree-fill, .bi-apple, .bi-flower2 {
+    /* Perbaikan untuk ikon agar lebih jelas dan putih */
+    .bi-leaf, .bi-leaf-fill, .bi-tree, .bi-tree-fill, .bi-apple, .bi-flower2,
+    .bi-clock-history, .bi-grid, .bi-apple, .bi-flower2 {
+        color: white !important;
         filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
         text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    /* Badge sumber indikator dengan teks putih */
+    .sumber-badge {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        font-weight: 500;
+        padding: 8px 16px;
+    }
+    
+    .sumber-badge i {
+        color: white;
+        margin-right: 6px;
+    }
+
+    /* Memastikan ikon di dalam badge juga putih */
+    .sumber-badge i {
+        color: white !important;
     }
 </style>
 {% endblock %}
@@ -224,8 +250,8 @@
             <h2 class="fw-bold mb-1"><i class="bi bi-heart-pulse-fill me-2"></i>Diagnosis Penyakit</h2>
             <p class="mb-0 opacity-90">Tentukan fase pertumbuhan lalu klik pada kotak gejala yang sesuai dengan kondisi tanaman Anda.</p>
             <div class="mt-2">
-                <span class="badge bg-light text-success border border-light bg-opacity-10">
-                    <i class="bi bi-book me-1"></i> Sumber Indikator: Meilin (2014) & Lestari (2025)
+                <span class="badge sumber-badge">
+                    <i class="bi bi-book-fill"></i> Sumber Indikator: Meilin (2014) & Lestari (2025)
                 </span>
             </div>
         </div>
@@ -289,16 +315,16 @@
             
             {% if kategori == 'daun' %}
                 {% set theme_class = 'category-success' %}
-                {% set cat_icon = 'leaf' %}
+                {% set cat_icon = 'leaf-fill' %}  <!-- Menggunakan leaf-fill agar lebih solid -->
             {% elif kategori == 'batang' %}
                 {% set theme_class = 'category-warning' %}
-                {% set cat_icon = 'tree' %}
+                {% set cat_icon = 'tree-fill' %}  <!-- Menggunakan tree-fill agar lebih solid -->
             {% elif kategori == 'buah' %}
                 {% set theme_class = 'category-danger' %}
-                {% set cat_icon = 'apple' %}
+                {% set cat_icon = 'apple' %}      <!-- Apple tetap menggunakan icon yang sama -->
             {% elif kategori == 'akar' %}
                 {% set theme_class = 'category-secondary' %}
-                {% set cat_icon = 'flower2' %}
+                {% set cat_icon = 'flower2' %}    <!-- Flower2 tetap menggunakan icon yang sama -->
             {% endif %}
 
             <div class="category-section {{ theme_class }}">
@@ -383,6 +409,9 @@
             if (isFaseSelected) {
                 faseStatus.textContent = 'Sudah Dipilih';
                 faseStatus.classList.replace('text-danger', 'text-success');
+            } else {
+                faseStatus.textContent = 'Belum Dipilih';
+                faseStatus.classList.replace('text-success', 'text-danger');
             }
 
             // Aturan: Tombol aktif JIKA Fase dipilih AND Gejala minimal 1 dipilih

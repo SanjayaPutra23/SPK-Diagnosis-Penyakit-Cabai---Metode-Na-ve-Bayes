@@ -127,7 +127,6 @@ class Diagnosa(db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    # PERBAIKAN: Menggunakan db.session.get (Standar SQLAlchemy versi terbaru)
     return db.session.get(User, int(user_id))
 
 # ================= HELPER FUNCTIONS =================
@@ -158,9 +157,6 @@ def get_confidence_level(probabilitas):
         return "sedang"
     else:
         return "rendah"
-
-    app.logger.debug(f"[KEYAKINAN] Hasil: {result}")
-    return result
 
 
 # ================= TEMPLATE FILTERS =================
@@ -334,6 +330,11 @@ def register():
         nama_lengkap = request.form.get("nama_lengkap")
         role = request.form.get("role", "petani")
 
+        # PERBAIKAN: Hanya validasi field yang ada
+        if not username or not password or not nama_lengkap:
+            flash("Username, password, dan nama lengkap wajib diisi!", "danger")
+            return render_template("register.html")
+
         if User.query.filter_by(username=username).first():
             flash("Username sudah digunakan!", "danger")
             return render_template("register.html")
@@ -378,7 +379,6 @@ def dashboard():
         .all()
     )
 
-    # PERBAIKAN: Inject persentase agar bisa dibaca oleh HTML
     for d in diagnosa_terbaru:
         d.prob_persen = float(d.nilai_posterior or 0) * 100
         d.keyakinan = get_confidence_level(d.prob_persen)
@@ -408,9 +408,7 @@ def diagnosa():
 
     if request.method == "POST":
         gejala_ids = request.form.getlist("gejala")
-        fase_input = request.form.get(
-            "fase_pertumbuhan"
-        )  # Menangkap Fase (Vegetatif/Generatif)
+        fase_input = request.form.get("fase_pertumbuhan")
 
         if not gejala_ids or not fase_input:
             flash(
@@ -432,7 +430,7 @@ def diagnosa():
 
             top_result = hasil[0]
 
-            # Konversi persen ke desimal untuk disimpan ke Database (Sesuai ERD DECIMAL(5,4))
+            # Konversi persen ke desimal untuk disimpan ke Database
             nilai_posterior_db = top_result["probabilitas"] / 100.0
 
             # Simpan riwayat
@@ -467,7 +465,7 @@ def hasil_diagnosa(diagnosa_id):
             flash("Akses ditolak!", "danger")
             return redirect(url_for("riwayat"))
 
-        # Hitung Ulang On-The-Fly (Karena ERD baru tidak menyimpan JSON hasil)
+        # Hitung Ulang On-The-Fly
         gejala_ids = json.loads(diagnosa.gejala_input) if diagnosa.gejala_input else []
         nb = NaiveBayesDiagnosa()
         hasil = nb.hitung_probabilitas(gejala_ids, diagnosa.fase_input)
@@ -521,7 +519,6 @@ def riwayat():
         .all()
     )
 
-    # Inject persentase untuk UI
     for d in diagnosa_list:
         d.prob_persen = float(d.nilai_posterior or 0) * 100
         d.keyakinan = get_confidence_level(d.prob_persen)
@@ -538,12 +535,17 @@ def tentang_sistem():
 @login_required
 def profile():
     if request.method == "POST":
+        # PERBAIKAN: Hanya update nama_lengkap (email & lokasi sudah dihapus)
         current_user.nama_lengkap = request.form.get("nama_lengkap")
+        
+        # Update password jika diisi
         pw_baru = request.form.get("password_baru")
         if pw_baru:
             current_user.password = hash_password(pw_baru)
+            
         db.session.commit()
         flash("Profil diperbarui!", "success")
+        
     return render_template("profile.html", user=current_user)
 
 
@@ -558,24 +560,19 @@ def profile_stats():
 
         total_diagnosa = Diagnosa.query.filter_by(user_id=current_user.id).count()
 
-        keyakinan_counts = {
-            'tinggi': Diagnosa.query.filter_by(
-                user_id=current_user.id, 
-                keyakinan='tinggi'
-            ).count(),
-            'sedang': Diagnosa.query.filter_by(
-                user_id=current_user.id, 
-                keyakinan='sedang'
-            ).count(),
-            'rendah': Diagnosa.query.filter_by(
-                user_id=current_user.id, 
-                keyakinan='rendah'
-            ).count()
-        }
+        # PERBAIKAN: Hitung keyakinan berdasarkan nilai_posterior
+        diagnosa_list = Diagnosa.query.filter_by(user_id=current_user.id).all()
+        keyakinan_counts = {'tinggi': 0, 'sedang': 0, 'rendah': 0}
+        
+        for d in diagnosa_list:
+            if d.nilai_posterior:
+                prob = float(d.nilai_posterior) * 100
+                keyakinan = get_confidence_level(prob)
+                keyakinan_counts[keyakinan] += 1
 
         penyakit_stats = db.session.query(
-            Penyakit.nama,
-            Penyakit.kode,
+            Penyakit.nama_penyakit.label('nama'),
+            Penyakit.kode_penyakit.label('kode'),
             func.count(Diagnosa.id).label('jumlah')
         ).join(Diagnosa, Diagnosa.penyakit_id == Penyakit.id)\
          .filter(Diagnosa.user_id == current_user.id)\
@@ -591,7 +588,7 @@ def profile_stats():
         tiga_puluh_hari_lalu = datetime.utcnow() - timedelta(days=30)
         diagnosa_bulanan = Diagnosa.query.filter(
             Diagnosa.user_id == current_user.id,
-            Diagnosa.created_at >= tiga_puluh_hari_lalu
+            Diagnosa.tanggal_diagnosa >= tiga_puluh_hari_lalu
         ).count()
 
         days_since_join = (datetime.utcnow() - current_user.created_at).days
@@ -627,7 +624,6 @@ def admin_dashboard():
         Diagnosa.query.order_by(Diagnosa.tanggal_diagnosa.desc()).limit(10).all()
     )
 
-    # PERBAIKAN: Inject persentase dan keyakinan untuk ditampilkan di UI
     for d in diagnosa_terbaru:
         d.prob_persen = float(d.nilai_posterior or 0) * 100
         d.keyakinan = get_confidence_level(d.prob_persen)
@@ -658,7 +654,6 @@ def admin_penyakit():
 
     penyakit_list = Penyakit.query.order_by(Penyakit.kode_penyakit).all()
 
-    # PERBAIKAN: Ganti PenyakitGejala menjadi BobotProbabilitas
     return render_template(
         "admin/penyakit.html",
         penyakit_list=penyakit_list,
@@ -672,7 +667,6 @@ def admin_bobot():
     if current_user.role != "admin":
         return redirect(url_for("dashboard"))
     bobot_list = BobotProbabilitas.query.all()
-    # Anda perlu membuat template 'admin/bobot.html' nanti
     return render_template("admin/bobot.html", bobot_list=bobot_list)
 
 
@@ -682,7 +676,6 @@ def admin_rekomendasi():
     if current_user.role != "admin":
         return redirect(url_for("dashboard"))
     rek_list = Rekomendasi.query.all()
-    # Anda perlu membuat template 'admin/rekomendasi.html' nanti
     return render_template("admin/rekomendasi.html", rek_list=rek_list)
 
 
@@ -704,7 +697,6 @@ def admin_pengguna():
     if current_user.role != "admin":
         return redirect(url_for("dashboard"))
     return render_template("admin/pengguna.html", user_list=User.query.all())
-
 
 # ================= CRUD ADMIN LENGKAP =================
 
@@ -791,9 +783,15 @@ def tambah_pengguna():
         nama_lengkap = request.form.get("nama_lengkap")
         role = request.form.get("role", "petani")
 
+        # Validasi field
+        if not username or not password or not nama_lengkap:
+            flash("Username, password, dan nama lengkap wajib diisi!", "danger")
+            return redirect(url_for("tambah_pengguna"))
+
+        # Cek apakah username sudah ada
         if User.query.filter_by(username=username).first():
             flash("Username sudah digunakan!", "danger")
-            return redirect(url_for("admin_pengguna"))
+            return redirect(url_for("tambah_pengguna"))
 
         try:
             hashed_pw = hash_password(password)
@@ -806,14 +804,14 @@ def tambah_pengguna():
             db.session.add(user_baru)
             db.session.commit()
             flash("Pengguna berhasil ditambahkan!", "success")
+            return redirect(url_for("admin_pengguna"))
         except Exception as e:
             db.session.rollback()
             flash(f"Gagal menambah pengguna: {str(e)}", "danger")
+            return redirect(url_for("tambah_pengguna"))
 
-        return redirect(url_for("admin_pengguna"))
-
-    # Jika GET, render modal form (ini biasanya di-handle via Modal di HTML, jadi kita fallback ke index admin_pengguna)
-    return redirect(url_for("admin_pengguna"))
+    # PERBAIKAN: Me-render halaman form tambah_pengguna.html, BUKAN redirect
+    return render_template("admin/tambah_pengguna.html")
 
 
 @app.route("/admin/pengguna/edit/<int:id>", methods=["GET", "POST"])
@@ -830,6 +828,7 @@ def edit_pengguna(id):
         user.nama_lengkap = request.form.get("nama_lengkap")
         user.role = request.form.get("role")
 
+        # PERBAIKAN: Hanya update password jika diisi
         password_baru = request.form.get("password")
         if password_baru:
             user.password = hash_password(password_baru)
@@ -856,7 +855,7 @@ def hapus_pengguna(id):
     return redirect(url_for("admin_pengguna"))
 
 
-# ================= FIX DATA ROUTE (DIPERBAIKI) =================
+# ================= FIX DATA ROUTE =================
 @app.route('/admin/fix-inconsistent-data')
 @login_required
 def fix_inconsistent_data():
@@ -873,25 +872,13 @@ def fix_inconsistent_data():
         app.logger.info(f"[FIX_DATA] Memeriksa {len(all_diagnosa)} data diagnosa")
         
         for diagnosa in all_diagnosa:
-            prob = diagnosa.probabilitas or 0
+            prob = float(diagnosa.nilai_posterior or 0) * 100
             
             # Tentukan keyakinan yang seharusnya
             expected_keyakinan = get_confidence_level(prob)
             
-            # Cek inkonsistensi
-            if diagnosa.keyakinan != expected_keyakinan:
-                inconsistent_count += 1
-                app.logger.warning(f"[FIX_DATA] INKONSISTENSI ditemukan ID {diagnosa.id}:")
-                app.logger.warning(f"  Probabilitas: {prob}%")
-                app.logger.warning(f"  Keyakinan saat ini: {diagnosa.keyakinan}")
-                app.logger.warning(f"  Keyakinan seharusnya: {expected_keyakinan}")
-                
-                # Perbaiki data
-                diagnosa.keyakinan = expected_keyakinan
-                fixed_count += 1
-                
-                app.logger.info(f"[FIX_DATA] Diperbaiki ID {diagnosa.id}: {diagnosa.keyakinan}")
-        
+            # PERBAIKAN: Tidak ada kolom keyakinan di database, jadi kita hitung ulang di runtime
+            
         if fixed_count > 0:
             db.session.commit()
             flash(f'Berhasil memperbaiki {fixed_count} data diagnosa yang inkonsisten (dari {inconsistent_count} ditemukan)', 'success')
@@ -908,6 +895,7 @@ def fix_inconsistent_data():
     
     return redirect(url_for('admin_dashboard'))
 
+
 @app.route('/admin/fix-diagnosa-data')
 @login_required
 def fix_diagnosa_data():
@@ -920,31 +908,8 @@ def fix_diagnosa_data():
         all_diagnosa = Diagnosa.query.all()
         fixed_count = 0
 
-        for diagnosa in all_diagnosa:
-            if not diagnosa.hasil or diagnosa.hasil.strip() == '':
-                if diagnosa.penyakit_id:
-                    penyakit = Penyakit.query.get(diagnosa.penyakit_id)
-                    if penyakit:
-                        hasil_data = [{
-                            'penyakit_id': penyakit.id,
-                            'nama_penyakit': penyakit.nama,
-                            'kode_penyakit': penyakit.kode,
-                            'deskripsi': penyakit.deskripsi or '',
-                            'solusi': penyakit.solusi or '',
-                            'probabilitas': diagnosa.probabilitas or 0,
-                            'keyakinan': diagnosa.keyakinan or 'rendah',
-                            'warna_keyakinan': 'success' if (diagnosa.keyakinan or '') == 'tinggi' 
-                                                     else 'warning' if (diagnosa.keyakinan or '') == 'sedang' 
-                                                     else 'secondary'
-                        }]
-                        diagnosa.hasil = json.dumps(hasil_data, ensure_ascii=False)
-                        fixed_count += 1
-
-        if fixed_count > 0:
-            db.session.commit()
-            flash(f'Berhasil memperbaiki {fixed_count} data diagnosa', 'success')
-        else:
-            flash('Tidak ada data yang perlu diperbaiki', 'info')
+        # PERBAIKAN: Tidak ada kolom hasil di database, jadi route ini bisa dihapus atau dikosongkan
+        flash('Tidak ada data yang perlu diperbaiki', 'info')
 
     except Exception as e:
         db.session.rollback()

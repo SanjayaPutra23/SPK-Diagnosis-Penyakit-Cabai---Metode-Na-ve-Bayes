@@ -154,7 +154,7 @@
         <div class="col-md-6 d-flex justify-content-md-end gap-3 align-items-center mt-3 mt-md-0">
             <div class="search-box">
                 <i class="bi bi-search"></i>
-                <input type="text" id="searchInput" class="form-control" placeholder="Cari Username, Nama, atau Email...">
+                <input type="text" id="searchInput" class="form-control" placeholder="Cari Username atau Nama...">
             </div>
             <a href="{{ url_for('tambah_pengguna') }}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
                 <i class="bi bi-plus-lg me-2"></i>Tambah
@@ -163,28 +163,22 @@
     </div>
 
     <div class="row mb-4">
-        <div class="col-md-3 col-6">
+        <div class="col-md-4 col-6">
             <div class="stats-card">
                 <div class="number" id="totalUsers">{{ user_list|length }}</div>
                 <div class="label">Total Pengguna</div>
             </div>
         </div>
-        <div class="col-md-3 col-6">
+        <div class="col-md-4 col-6">
             <div class="stats-card">
                 <div class="number" id="totalAdmin">{{ user_list|selectattr('role', 'equalto', 'admin')|list|length }}</div>
                 <div class="label">Admin</div>
             </div>
         </div>
-        <div class="col-md-3 col-6">
+        <div class="col-md-4 col-6">
             <div class="stats-card">
                 <div class="number" id="totalPetani">{{ user_list|selectattr('role', 'equalto', 'petani')|list|length }}</div>
                 <div class="label">Petani</div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stats-card">
-                <div class="number">{{ user_list|selectattr('email', 'none')|list|length }}</div>
-                <div class="label">Tanpa Email</div>
             </div>
         </div>
     </div>
@@ -210,14 +204,12 @@
             <table class="table" id="userTable">
                 <thead>
                     <tr>
-                        <th class="ps-4" width="5%">ID</th>
-                        <th width="15%">USERNAME</th>
-                        <th width="20%">NAMA LENGKAP</th>
-                        <th width="20%">EMAIL</th>
-                        <th width="15%">LOKASI</th>
-                        <th class="text-center" width="10%">ROLE</th>
-                        <th class="text-center" width="10%">TERDAFTAR</th>
-                        <th class="text-center" width="15%">AKSI</th>
+                        <th class="ps-4" width="8%">ID</th>
+                        <th width="20%">USERNAME</th>
+                        <th width="25%">NAMA LENGKAP</th>
+                        <th class="text-center" width="12%">ROLE</th>
+                        <th class="text-center" width="15%">TERDAFTAR</th>
+                        <th class="text-center" width="20%">AKSI</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -234,16 +226,6 @@
                             </td>
                             <td>
                                 <span>{{ user.nama_lengkap or '-' }}</span>
-                            </td>
-                            <td>
-                                {% if user.email %}
-                                    <span class="text-dark">{{ user.email }}</span>
-                                {% else %}
-                                    <span class="text-muted fst-italic">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span>{{ user.lokasi or '-' }}</span>
                             </td>
                             <td class="text-center">
                                 <span class="badge rounded-pill {{ 'badge-admin' if user.role == 'admin' else 'badge-petani' }}">
@@ -326,14 +308,6 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="detail-item">
-                                                        <span class="detail-label">Email:</span>
-                                                        <span class="detail-value">{{ user.email or '-' }}</span>
-                                                    </div>
-                                                    <div class="detail-item">
-                                                        <span class="detail-label">Lokasi:</span>
-                                                        <span class="detail-value">{{ user.lokasi or '-' }}</span>
-                                                    </div>
-                                                    <div class="detail-item">
                                                         <span class="detail-label">Role:</span>
                                                         <span class="detail-value">{{ user.role|title }}</span>
                                                     </div>
@@ -411,21 +385,8 @@
                                                     <div class="form-text text-muted small">Username untuk login sistem</div>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
-                                                    <label class="form-label small fw-bold">Email</label>
-                                                    <input type="email" name="email" class="form-control" value="{{ user.email or '' }}">
-                                                    <div class="form-text text-muted small">Email aktif pengguna</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
                                                     <label class="form-label small fw-bold">Nama Lengkap</label>
                                                     <input type="text" name="nama_lengkap" class="form-control" value="{{ user.nama_lengkap or '' }}">
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label small fw-bold">Lokasi</label>
-                                                    <input type="text" name="lokasi" class="form-control" value="{{ user.lokasi or '' }}">
-                                                    <div class="form-text text-muted small">Lokasi tempat tinggal/kerja</div>
                                                 </div>
                                             </div>
                                             
@@ -499,7 +460,7 @@
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="8" class="text-center py-5">
+                            <td colspan="6" class="text-center py-5">
                                 <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" width="80" class="opacity-25 mb-3">
                                 <p class="text-muted">Belum ada data pengguna tersedia.</p>
                                 <a href="{{ url_for('tambah_pengguna') }}" class="btn btn-success mt-2">
@@ -531,8 +492,6 @@ document.addEventListener('DOMContentLoaded', function() {
         userRows.forEach(row => {
             const username = row.cells[1].innerText.toLowerCase();
             const nama = row.cells[2].innerText.toLowerCase();
-            const email = row.cells[3].innerText.toLowerCase();
-            const lokasi = row.cells[4].innerText.toLowerCase();
             const role = row.getAttribute('data-role');
             
             // Cek apakah sesuai dengan filter role
@@ -541,9 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Cek apakah sesuai dengan search
             const searchMatch = currentSearch === '' || 
                 username.includes(currentSearch) || 
-                nama.includes(currentSearch) || 
-                email.includes(currentSearch) || 
-                lokasi.includes(currentSearch);
+                nama.includes(currentSearch);
             
             // Tampilkan jika keduanya sesuai
             if (roleMatch && searchMatch) {
